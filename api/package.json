@@ -1,5 +1,5 @@
 {
-  "name": "nbs-bond-api",
+  "name": "ecomint-api",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -50,7 +50,7 @@
     "@typescript-eslint/parser": "^7.0.0",
     "embedded-postgres": "18.4.0-beta.17",
     "eslint": "^8.57.0",
-    "stryker-js": "^4.0.0",
+    "@stryker-mutator/core": "^8.0.0",
     "jest": "^29.7.0",
     "supertest": "^6.3.0",
     "ts-jest": "^29.1.0",

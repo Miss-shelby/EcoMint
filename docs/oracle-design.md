@@ -42,7 +42,7 @@ Oracle adapters produce a canonical signed manifest tying raw observations, meth
 {
   "project_id": "VCS-1234",
   "provider": "SatelliteProcessor",
-  "signer_public_key": "VERDANT_ORACLE_KEY_V1",
+  "signer_public_key": "ECOMINT_ORACLE_KEY_V1",
   "methodology": "REMOTE_SENSING",
   "period_start": "2025-01-01",
   "period_end": "2025-12-31",

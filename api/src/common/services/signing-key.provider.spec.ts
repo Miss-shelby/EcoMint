@@ -25,7 +25,7 @@ describe('SigningKeyProvider', () => {
   });
 
   it('can be swapped to the local file provider without changing call sites', () => {
-    const dir = mkdtempSync(join(tmpdir(), 'verdant-keys-'));
+    const dir = mkdtempSync(join(tmpdir(), 'ecomint-keys-'));
     const file = join(dir, 'keys.json');
     writeFileSync(
       file,

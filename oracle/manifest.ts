@@ -34,8 +34,8 @@ export interface CreateManifestInput {
   generated_at?: string;
 }
 
-export const DEFAULT_MANIFEST_SECRET = 'verdant-oracle-provider-secret-key';
-export const DEFAULT_SIGNER_KEY = 'VERDANT_ORACLE_KEY_V1';
+export const DEFAULT_MANIFEST_SECRET = 'ecomint-oracle-provider-secret-key';
+export const DEFAULT_SIGNER_KEY = 'ECOMINT_ORACLE_KEY_V1';
 
 /**
  * Generate a canonical signed evidence manifest tying raw observations,

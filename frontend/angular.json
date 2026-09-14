@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "nbs-bond-frontend": {
+    "ecomint-frontend": {
       "projectType": "application",
       "root": "",
       "sourceRoot": "src",
@@ -36,7 +36,7 @@
         "serve": {
           "builder": "@angular/build:dev-server",
           "options": { "proxyConfig": "proxy.conf.json" },
-          "configurations": { "production": { "buildTarget": "nbs-bond-frontend:build:production" }, "development": { "buildTarget": "nbs-bond-frontend:build:development" } },
+          "configurations": { "production": { "buildTarget": "ecomint-frontend:build:production" }, "development": { "buildTarget": "ecomint-frontend:build:development" } },
           "defaultConfiguration": "development"
         },
         "test": {

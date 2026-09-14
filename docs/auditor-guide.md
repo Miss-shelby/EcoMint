@@ -1,6 +1,6 @@
 # Auditor Guide - Data Provenance and Exports
 
-This document explains how auditors can retrieve verifiable ecological and transaction history bundles from the Verdant Bond Protocol API and verify their cryptographic integrity.
+This document explains how auditors can retrieve verifiable ecological and transaction history bundles from the EcoMint API and verify their cryptographic integrity.
 
 ---
 

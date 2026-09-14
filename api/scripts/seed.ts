@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Deterministic local seed data for Verdant Bond Protocol.
+ * Deterministic local seed data for EcoMint.
  *
  * Populates the Redis cache keys the API reads (projects, bonds, orders,
  * oracle reports) with realistic fixtures so the local frontend shows

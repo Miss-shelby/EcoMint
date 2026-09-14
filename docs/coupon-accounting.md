@@ -1,6 +1,6 @@
 # Coupon Accounting Invariants
 
-The Verdant Bond Protocol enforces strict conservation of carbon credits across the coupon lifecycle. Credits are derived from verified oracle reports and are distributed to bond holders. The accounting guarantees that no credits are magically created, lost in transit, or claimed multiple times.
+The EcoMint enforces strict conservation of carbon credits across the coupon lifecycle. Credits are derived from verified oracle reports and are distributed to bond holders. The accounting guarantees that no credits are magically created, lost in transit, or claimed multiple times.
 
 ## Conservation Rule
 

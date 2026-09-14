@@ -1,6 +1,6 @@
 # Smart Contract Error Mappings
 
-This document details how Soroban Rust smart contract error enums are mapped to stable API error codes in the Verdant Bond Protocol NestJS API.
+This document details how Soroban Rust smart contract error enums are mapped to stable API error codes in the EcoMint NestJS API.
 
 ---
 
@@ -37,7 +37,7 @@ To provide machine-readable error codes and descriptive messages to the frontend
 
 ## Error Mappings Registry
 
-The mappings are maintained in [`api/src/stellar/contract-errors.ts`](file:///Users/favoureze/verdant-bond-protocol/api/src/stellar/contract-errors.ts).
+The mappings are maintained in [`api/src/stellar/contract-errors.ts`](../api/src/stellar/contract-errors.ts).
 
 ### Error Categories
 Contract addresses are grouped into these categories:
@@ -55,7 +55,7 @@ Contract addresses are grouped into these categories:
 When modifying error enums in the smart contracts, you **MUST** update the API mapping table to ensure frontend alignment and prevent CI failures.
 
 ### Step 1: Modify Rust Enum
-If you add or shift variants in [`contracts/shared/src/errors.rs`](file:///Users/favoureze/verdant-bond-protocol/contracts/shared/src/errors.rs), note the discriminant number.
+If you add or shift variants in [`contracts/shared/src/errors.rs`](../contracts/shared/src/errors.rs), note the discriminant number.
 ```rust
 pub enum BondError {
     NotInitialized = 1,
@@ -65,7 +65,7 @@ pub enum BondError {
 ```
 
 ### Step 2: Update TypeScript stable code and mappings
-1.  Open [`api/src/stellar/contract-errors.ts`](file:///Users/favoureze/verdant-bond-protocol/api/src/stellar/contract-errors.ts).
+1.  Open [`api/src/stellar/contract-errors.ts`](../api/src/stellar/contract-errors.ts).
 2.  Add the new string constant to the `StableErrorCode` enum:
     ```typescript
     export enum StableErrorCode {

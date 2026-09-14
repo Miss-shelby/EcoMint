@@ -18,7 +18,7 @@ export interface SeedSummary {
   };
 }
 
-const MARKER_KEY = 'seed:verdant:marker';
+const MARKER_KEY = 'seed:ecomint:marker';
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 20;
 

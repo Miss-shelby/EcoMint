@@ -80,7 +80,7 @@ JWT_REFRESH_EXPIRY=7d
 KYC_PROVIDER_URL=https://kyc.mock-provider.com
 KYC_API_KEY=mock-key
 
-DATABASE_URL=postgresql://nbs:nbs@localhost:5432/verdant_bond
+DATABASE_URL=postgresql://nbs:nbs@localhost:5432/ecomint_db
 REDIS_URL=redis://localhost:6379
 
 PORT=3000

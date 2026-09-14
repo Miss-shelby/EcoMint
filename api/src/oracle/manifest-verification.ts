@@ -35,7 +35,7 @@ export const EvidenceManifestSchema = z.object({
 
 export type EvidenceManifest = z.infer<typeof EvidenceManifestSchema>;
 
-export const DEFAULT_MANIFEST_SECRET = 'verdant-oracle-provider-secret-key';
+export const DEFAULT_MANIFEST_SECRET = 'ecomint-oracle-provider-secret-key';
 
 /** Canonical serialization of a JSON payload (keys sorted, compact). */
 export function canonicalJson(value: unknown): string {

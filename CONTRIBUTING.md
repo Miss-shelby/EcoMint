@@ -1,4 +1,4 @@
-# Contributing to Verdant Bond Protocol
+# Contributing to EcoMint
 
 Thank you for your interest in contributing! We welcome contributions from smart contract engineers, climate scientists, financial modelers, oracle architects, and frontend developers.
 
@@ -32,8 +32,8 @@ This project is governed by the [Code of Conduct](CODE_OF_CONDUCT.md). All parti
 
 ```bash
 # Clone the repository
-git clone https://github.com/prissca/verdant-bond-protocol.git
-cd verdant-bond-protocol
+git clone https://github.com/Miss-Shelby/ecomint.git
+cd ecomint
 
 # Copy environment template
 cp .env.example api/.env
@@ -62,7 +62,7 @@ Hard issues are labeled with domain tags that route contributors to the right fi
 ## Project Structure
 
 ```
-verdant-bond-protocol/
+ecomint/
 ├── contracts/            # Soroban smart contracts (Rust)
 │   ├── bond-issuer/
 │   ├── coupon-engine/
@@ -270,10 +270,10 @@ Use the [Feature Request template](.github/ISSUE_TEMPLATE/feature_request.md). I
 
 ## Getting Help
 
-- Check existing [issues](https://github.com/prissca/verdant-bond-protocol/issues) and [discussions](https://github.com/prissca/verdant-bond-protocol/discussions)
+- Check existing [issues](https://github.com/Miss-Shelby/ecomint/issues) and [discussions](https://github.com/Miss-Shelby/ecomint/discussions)
 - Review [docs/](./docs/) for architecture and design details
-- Open a [discussion](https://github.com/prissca/verdant-bond-protocol/discussions) for questions
+- Open a [discussion](https://github.com/Miss-Shelby/ecomint/discussions) for questions
 
 ---
 
-Thank you for helping make Verdant Bond Protocol better!
+Thank you for helping make EcoMint better!

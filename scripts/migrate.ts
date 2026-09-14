@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 async function main() {
-  console.log('Verdant Bond Protocol — migration runner');
+  console.log('EcoMint — migration runner');
   console.log('This script will be filled with actual migration logic later.');
 }
 

@@ -9,7 +9,7 @@ import { AUTH_REASON_PARAM, AuthDenialReason, RETURN_URL_PARAM } from './guards/
 const DENIAL_MESSAGES: Record<AuthDenialReason, string> = {
   wallet: 'Connect your Stellar wallet to continue to that page.',
   session: 'Sign in with your wallet to continue to that page.',
-  admin: 'That page is restricted to the protocol admin wallet.',
+  admin: 'That page is restricted to the EcoMint admin wallet.',
 };
 
 /**
@@ -29,8 +29,8 @@ function sanitizeReturnUrl(candidate: string | null): string {
   template: `
     <div class="auth-page">
       <div class="auth-card">
-        <h1>Verdant Bond Protocol</h1>
-        <p class="subtitle">Sign in with your Stellar wallet</p>
+        <h1>EcoMint</h1>
+        <p class="subtitle">Sign in with your Stellar wallet to access EcoMint</p>
 
         <p *ngIf="denialMessage()" class="notice" role="status">{{ denialMessage() }}</p>
 

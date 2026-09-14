@@ -341,7 +341,7 @@ describe('OracleService', () => {
       const validManifest = {
         project_id: 'VCS-1234',
         provider: 'SatelliteProcessor',
-        signer_public_key: 'VERDANT_ORACLE_KEY_V1',
+        signer_public_key: 'ECOMINT_ORACLE_KEY_V1',
         methodology: 'VM0003',
         period_start: '2023-11-14',
         period_end: '2023-11-15',

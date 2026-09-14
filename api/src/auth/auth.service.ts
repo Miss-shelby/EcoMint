@@ -31,7 +31,7 @@ interface StoredChallenge {
 }
 
 const AUDIENCE =
-  process.env.APP_URL || process.env.BASE_URL || 'verdant-bond-protocol';
+  process.env.APP_URL || process.env.BASE_URL || 'ecomint.io';
 
 @Injectable()
 export class AuthService {

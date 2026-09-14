@@ -26,7 +26,7 @@ describe('Rfc7807ExceptionFilter', () => {
     expect(status).toHaveBeenCalledWith(400);
     expect(json).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: 'https://errors.verdant-bond-protocol.org/VALIDATION_ERROR',
+        type: 'https://errors.ecomint.io/VALIDATION_ERROR',
         status: 400,
         code: 'VALIDATION_ERROR',
         correlationId: 'corr-123',

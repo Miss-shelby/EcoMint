@@ -2,7 +2,7 @@
 
 ## Admin Control Model
 
-The Verdant Bond Protocol uses a **3-of-5 multisig + 48-hour timelock** governance model to control all critical contract administration functions.
+The EcoMint uses a **3-of-5 multisig + 48-hour timelock** governance model to control all critical contract administration functions.
 
 ### Deployment Architecture
 

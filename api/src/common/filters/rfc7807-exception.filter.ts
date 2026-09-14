@@ -87,7 +87,7 @@ export class Rfc7807ExceptionFilter implements ExceptionFilter {
     }
 
     const problem: ProblemDetail = {
-      type: `https://errors.verdant-bond-protocol.org/${code}`,
+      type: `https://errors.ecomint.io/${code}`,
       title,
       status,
       detail,
