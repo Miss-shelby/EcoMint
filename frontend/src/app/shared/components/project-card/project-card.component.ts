@@ -34,20 +34,66 @@ const COUNTRY_FLAGS: Record<string, string> = {
         </div>
         <div class="project-field">
           <span class="label">Carbon Estimate</span>
-          <span class="value">{{ project().carbonSequestrationEstimate | number }} tCO₂e</span>
+          <span class="value mint-accent">{{ project().carbonSequestrationEstimate | number }} tCO₂e</span>
         </div>
       </div>
     </div>
   `,
   styles: [`
-    .project-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .project-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .project-name { font-weight: 600; font-size: 1rem; }
-    .project-body { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .project-field { display: flex; flex-direction: column; }
-    .label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
-    .value { font-size: 0.875rem; color: #1a1a2e; font-weight: 500; }
-    .value.methodology { font-family: monospace; font-size: 0.8rem; }
+    .project-card {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      padding: var(--spacing-20);
+      transition: all 0.15s ease;
+    }
+    .project-card:hover {
+      border-color: #383838;
+      transform: translateY(-1px);
+    }
+    .project-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--color-graphite);
+    }
+    .project-name {
+      font-weight: 500;
+      font-size: 1.05rem;
+      color: var(--color-chalk);
+      letter-spacing: 0.02em;
+    }
+    .project-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .project-field {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .label {
+      font-size: 11px;
+      color: var(--color-ash);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .value {
+      font-size: 0.9rem;
+      color: var(--color-chalk);
+      font-weight: 500;
+    }
+    .value.methodology {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--color-ash);
+    }
+    .mint-accent {
+      color: var(--color-signal-mint);
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -23,7 +23,18 @@ type SectionState = 'loading' | 'error' | 'empty' | 'ready';
   imports: [CommonModule, RouterModule, BondCardComponent, ProjectCardComponent, LoadingSpinnerComponent],
   template: `
     <div class="dashboard">
-      <h1 class="page-title">Dashboard</h1>
+      <div class="page-header">
+        <div>
+          <span class="header-tag">PORTFOLIO &amp; PROTOCOL OVERVIEW</span>
+          <h1 class="page-title">Command Dashboard</h1>
+        </div>
+        @if (walletService.address(); as addr) {
+          <div class="wallet-badge mono">
+            <span class="badge-dot"></span>
+            <span>{{ addr.slice(0, 6) }}...{{ addr.slice(-4) }}</span>
+          </div>
+        }
+      </div>
 
       @if (overallError()) {
         <div class="error-banner">
@@ -32,9 +43,10 @@ type SectionState = 'loading' | 'error' | 'empty' | 'ready';
         </div>
       }
 
+      <!-- Protocol Overview Metrics -->
       <section class="section">
         <div class="section-header">
-          <h2>Overview</h2>
+          <h2>Protocol Metrics</h2>
           @if (overviewState() === 'error') {
             <button class="btn btn-sm btn-outline" (click)="retryOverview()">Retry</button>
           }
@@ -61,30 +73,31 @@ type SectionState = 'loading' | 'error' | 'empty' | 'ready';
           }
           @case ('ready') {
             <div class="stats-grid">
-              <div class="stat-card">
+              <div class="stat-card stat-card-live">
                 <span class="stat-label">Total Bonds</span>
-                <span class="stat-value">{{ totalBonds() }}</span>
+                <span class="stat-value mint">{{ totalBonds() }}</span>
               </div>
               <div class="stat-card">
-                <span class="stat-label">Active Bonds</span>
+                <span class="stat-label">Active Issuances</span>
                 <span class="stat-value">{{ activeBonds() }}</span>
               </div>
               <div class="stat-card">
-                <span class="stat-label">Total Projects</span>
+                <span class="stat-label">Registered Projects</span>
                 <span class="stat-value">{{ totalProjects() }}</span>
               </div>
               <div class="stat-card">
                 <span class="stat-label">Carbon Sequestration</span>
-                <span class="stat-value">{{ carbonTotal() | number }} tCO₂e</span>
+                <span class="stat-value">{{ carbonTotal() | number }} <span class="unit">tCO₂e</span></span>
               </div>
             </div>
           }
         }
       </section>
 
+      <!-- Portfolio Position (wallet-scoped) -->
       <section class="section">
         <div class="section-header">
-          <h2>My Portfolio</h2>
+          <h2>My Positions</h2>
           <div class="header-actions">
             @if (portfolioState() === 'error') {
               <button class="btn btn-sm btn-outline" (click)="retryPortfolio()">Retry</button>
@@ -98,7 +111,7 @@ type SectionState = 'loading' | 'error' | 'empty' | 'ready';
         @switch (portfolioState()) {
           @case ('loading') {
             <div class="stats-grid stats-skeleton" aria-busy="true" aria-label="Loading portfolio">
-              @for (s of [1, 2, 3, 4]; track s) {
+              @for (s of [1, 2, 3, 4, 5]; track s) {
                 <div class="stat-card skeleton"><span class="skeleton-block"></span><span class="skeleton-block short"></span></div>
               }
             </div>
@@ -111,14 +124,14 @@ type SectionState = 'loading' | 'error' | 'empty' | 'ready';
           }
           @case ('empty') {
             <div class="empty-section">
-              <p>Connect your wallet to see your aggregated bond, marketplace, and credit positions.</p>
+              <p>Connect your wallet to inspect your aggregated bond holdings, marketplace orders, and carbon credits.</p>
             </div>
           }
           @case ('ready') {
-            <div class="stats-grid">
+            <div class="stats-grid grid-5">
               <div class="stat-card">
                 <span class="stat-label">Bonds Held</span>
-                <span class="stat-value">{{ portfolio()?.bondsHeld?.length ?? 0 }}</span>
+                <span class="stat-value mint">{{ portfolio()?.bondsHeld?.length ?? 0 }}</span>
               </div>
               <div class="stat-card">
                 <span class="stat-label">Open Listings</span>
@@ -141,14 +154,15 @@ type SectionState = 'loading' | 'error' | 'empty' | 'ready';
         }
       </section>
 
+      <!-- Recent Bonds -->
       <section class="section">
         <div class="section-header">
-          <h2>Recent Bonds</h2>
+          <h2>Active Bond Issuances</h2>
           <div class="header-actions">
             @if (bondsState() === 'error') {
               <button class="btn btn-sm btn-outline" (click)="retryBonds()">Retry</button>
             }
-            <a class="section-link" routerLink="/bonds">View All</a>
+            <a class="section-link" routerLink="/bonds">View All &rarr;</a>
           </div>
         </div>
 
@@ -167,7 +181,7 @@ type SectionState = 'loading' | 'error' | 'empty' | 'ready';
             </div>
           }
           @case ('empty') {
-            <p class="section-empty">No bonds found.</p>
+            <p class="section-empty">No active bonds found.</p>
           }
           @case ('ready') {
             <div class="card-grid">
@@ -179,14 +193,15 @@ type SectionState = 'loading' | 'error' | 'empty' | 'ready';
         }
       </section>
 
+      <!-- Recent Projects -->
       <section class="section">
         <div class="section-header">
-          <h2>Recent Projects</h2>
+          <h2>Verified Projects</h2>
           <div class="header-actions">
             @if (projectsState() === 'error') {
               <button class="btn btn-sm btn-outline" (click)="retryProjects()">Retry</button>
             }
-            <a class="section-link" routerLink="/projects">View All</a>
+            <a class="section-link" routerLink="/projects">View All &rarr;</a>
           </div>
         </div>
 
@@ -219,34 +234,188 @@ type SectionState = 'loading' | 'error' | 'empty' | 'ready';
     </div>
   `,
   styles: [`
-    .dashboard { max-width: 1200px; }
-    .page-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 24px; }
-    .error-banner { background: #fef2f2; color: #ef4444; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.875rem; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
-    .stat-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .stat-label { display: block; font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .stat-value { display: block; font-size: 1.75rem; font-weight: 700; color: #1a1a2e; }
-    .section { margin-bottom: 32px; }
-    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .section-header h2 { font-size: 1.125rem; font-weight: 600; }
-    .header-actions { display: flex; align-items: center; gap: 12px; }
-    .section-link { font-size: 0.875rem; color: #3b82f6; text-decoration: none; }
-    .section-link:hover { text-decoration: underline; }
-    .section-empty { color: #6b7280; font-size: 0.875rem; padding: 16px 0; }
-    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
-    .cards-skeleton { margin-bottom: 32px; }
-    .skeleton { min-height: 120px; display: flex; flex-direction: column; gap: 12px; }
-    .skeleton-block { background: #e5e7eb; border-radius: 6px; height: 18px; width: 100%; }
-    .skeleton-block.short { width: 55%; }
-    .stats-skeleton { }
-    .section-error { background: #fef2f2; color: #ef4444; padding: 16px; border-radius: 8px; font-size: 0.875rem; display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
-    .empty-section { text-align: center; padding: 48px 0; color: #6b7280; }
-    .btn { display: inline-block; padding: 10px 20px; border-radius: 8px; font-size: 0.875rem; font-weight: 500; text-decoration: none; cursor: pointer; border: none; }
-    .btn-sm { padding: 6px 12px; font-size: 0.8125rem; }
-    .btn-primary { background: #1a1a2e; color: #fff; }
-    .btn-primary:hover { background: #2a2a4e; }
-    .btn-outline { background: #fff; color: #1a1a2e; border: 1px solid #d1d5db; }
-    .btn-outline:hover { background: #f0f2f5; }
+    .dashboard {
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      gap: 36px;
+    }
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 8px;
+    }
+    .header-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--color-ash);
+    }
+    .page-title {
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--color-chalk);
+      margin-top: 4px;
+    }
+    .wallet-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      padding: 6px 14px;
+      border-radius: var(--radius-pills);
+      font-size: 12px;
+      color: var(--color-chalk);
+    }
+    .error-banner {
+      background: var(--color-danger-dim);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: var(--color-danger);
+      padding: 12px 16px;
+      border-radius: var(--radius-cards);
+      font-size: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+    .grid-5 {
+      grid-template-columns: repeat(5, 1fr);
+    }
+    .stat-card {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .stat-card-live {
+      border-color: var(--color-signal-mint);
+    }
+    .stat-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--color-ash);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--color-chalk);
+    }
+    .stat-value.mint {
+      color: var(--color-signal-mint);
+    }
+    .unit {
+      font-size: 13px;
+      color: var(--color-ash);
+      font-weight: 400;
+    }
+    .section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .section-header h2 {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--color-chalk);
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-link {
+      font-size: 13px;
+      color: var(--color-ash);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .section-link:hover {
+      color: var(--color-signal-mint);
+    }
+    .section-empty {
+      color: var(--color-ash);
+      font-size: 14px;
+      padding: 16px 0;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .cards-skeleton {
+      margin-bottom: 16px;
+    }
+    .skeleton {
+      min-height: 140px;
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .skeleton-block {
+      background: var(--color-graphite);
+      border-radius: 4px;
+      height: 20px;
+      width: 100%;
+      animation: pulse 1.5s infinite;
+    }
+    .skeleton-block.short {
+      width: 45%;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+    .section-error {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      color: var(--color-danger);
+      padding: 20px;
+      border-radius: var(--radius-cards);
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .empty-section {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--color-ash);
+      font-size: 14px;
+    }
+    @media (max-width: 900px) {
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+      .grid-5 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -258,7 +427,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly bonds = signal<Bond[]>([]);
   readonly projects = signal<Project[]>([]);
 
-  // Wallet-scoped aggregate portfolio (#116).
   readonly portfolio = signal<any | null>(null);
   readonly portfolioState = signal<SectionState>('loading');
   readonly portfolioError = signal('');
@@ -313,7 +481,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   retryOverview(): void {
-    // Overview derives from both feeds; retrying both restores it.
     this.loadBonds();
     this.loadProjects();
   }

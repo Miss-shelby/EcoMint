@@ -2,17 +2,19 @@ import { Routes } from '@angular/router';
 import { authGuard } from './auth/guards/auth.guard';
 
 /**
- * Route gating (issue #168).
+ * Route configuration for EcoMint.
  *
- * Public: `projects` (browse and register — the API leaves POST /projects
- * open), plus the read-only bond and marketplace listings, which render a
- * contextual `<app-connect-prompt>` over their write affordances.
+ * Public: `/` (Landing terminal hero & metrics), `projects` (browse & create),
+ * `bonds` (browse & view details), `marketplace` (browse listings), `auth`.
  *
- * Private: `dashboard` (wallet-scoped portfolio behind JwtAuthGuard) and the
- * write flows nested under `bonds` and `marketplace`.
+ * Private: `dashboard` (wallet-scoped portfolio behind authGuard).
  */
 export const routes: Routes = [
-  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
+  {
+    path: '',
+    loadComponent: () => import('./landing/landing.component').then(m => m.LandingComponent),
+    pathMatch: 'full',
+  },
   {
     path: 'dashboard',
     canActivate: [authGuard],
@@ -34,5 +36,5 @@ export const routes: Routes = [
     path: 'auth',
     loadChildren: () => import('./auth/auth.routes'),
   },
-  { path: '**', redirectTo: '/dashboard' },
+  { path: '**', redirectTo: '' },
 ];

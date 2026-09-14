@@ -18,8 +18,11 @@ import {
   imports: [CommonModule, RouterModule, ReactiveFormsModule],
   template: `
     <div class="create-page">
-      <a class="back-link" routerLink="/projects">← Back to Projects</a>
-      <h1 class="page-title">Register New Project</h1>
+      <a class="back-link" routerLink="/projects">&larr; Back to Projects</a>
+      <div class="page-header">
+        <span class="header-tag">REGISTRY ON-CHAIN ONBOARDING</span>
+        <h1 class="page-title">Register Nature Project</h1>
+      </div>
 
       @if (error()) {
         <div class="error-banner">{{ error() }}</div>
@@ -28,7 +31,7 @@ import {
       <form class="create-form" [formGroup]="form" (ngSubmit)="onSubmit()">
         <div class="form-group">
           <label class="form-label" for="name">Project Name</label>
-          <input id="name" class="form-input" formControlName="name" placeholder="Amazon Reforestation Phase 3" />
+          <input id="name" class="form-input" formControlName="name" placeholder="e.g. Amazon Reforestation Phase 3" />
           @if (form.get('name')?.invalid && form.get('name')?.touched) {
             <span class="form-error">Name is required</span>
           }
@@ -36,9 +39,9 @@ import {
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="methodology">Methodology</label>
+            <label class="form-label" for="methodology">Methodology Standard</label>
             <select id="methodology" class="form-select" formControlName="methodology">
-              <option value="" disabled>Select a methodology</option>
+              <option value="" disabled>Select methodology</option>
               @for (code of methodologyCodes; track code) {
                 <option [value]="code">{{ code }}</option>
               }
@@ -48,8 +51,8 @@ import {
             }
           </div>
           <div class="form-group">
-            <label class="form-label" for="country">Country</label>
-            <input id="country" class="form-input" formControlName="country" placeholder="BR" maxlength="2" />
+            <label class="form-label" for="country">Country Code (ISO 2-letter)</label>
+            <input id="country" class="form-input mono" formControlName="country" placeholder="BR" maxlength="2" />
             @if (form.get('country')?.hasError('required') && form.get('country')?.touched) {
               <span class="form-error">Country is required</span>
             }
@@ -76,19 +79,17 @@ import {
           </div>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="blueCarbon">
-              <input id="blueCarbon" type="checkbox" class="form-checkbox" formControlName="blueCarbon" />
-              Blue Carbon Project (mangrove / seagrass / saltmarsh)
-            </label>
-          </div>
+        <div class="checkbox-container">
+          <label class="form-checkbox-label" for="blueCarbon">
+            <input id="blueCarbon" type="checkbox" class="form-checkbox" formControlName="blueCarbon" />
+            <span>Blue Carbon Asset (Mangrove / Coastal Ecosystem)</span>
+          </label>
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label class="form-label" for="locationLat">Latitude</label>
-            <input id="locationLat" type="number" step="0.000001" class="form-input" formControlName="locationLat" placeholder="-3.4653" />
+            <input id="locationLat" type="number" step="0.000001" class="form-input mono" formControlName="locationLat" placeholder="-3.4653" />
             @if (form.get('locationLat')?.hasError('required') && form.get('locationLat')?.touched) {
               <span class="form-error">Latitude is required</span>
             }
@@ -98,7 +99,7 @@ import {
           </div>
           <div class="form-group">
             <label class="form-label" for="locationLng">Longitude</label>
-            <input id="locationLng" type="number" step="0.000001" class="form-input" formControlName="locationLng" placeholder="-62.2159" />
+            <input id="locationLng" type="number" step="0.000001" class="form-input mono" formControlName="locationLng" placeholder="-62.2159" />
             @if (form.get('locationLng')?.hasError('required') && form.get('locationLng')?.touched) {
               <span class="form-error">Longitude is required</span>
             }
@@ -110,46 +111,147 @@ import {
 
         <div class="form-group">
           <label class="form-label" for="boundaryFile">Geospatial Boundary (GeoJSON Polygon / MultiPolygon)</label>
-          <input id="boundaryFile" type="file" accept=".json,.geojson" class="form-input" (change)="onBoundaryFileSelected($event)" />
+          <input id="boundaryFile" type="file" accept=".json,.geojson" class="form-input-file" (change)="onBoundaryFileSelected($event)" />
           @if (boundaryError()) {
             <span class="form-error">{{ boundaryError() }}</span>
           }
           @if (boundaryFileName()) {
-            <span class="form-hint">Loaded boundary: {{ boundaryFileName() }}</span>
+            <span class="form-hint mono">Loaded boundary: {{ boundaryFileName() }}</span>
           }
         </div>
 
         <div class="form-actions">
           <a class="btn btn-outline" routerLink="/projects">Cancel</a>
           <button type="submit" class="btn btn-primary" [disabled]="form.invalid || submitting() || !!boundaryError()">
-            {{ submitting() ? 'Registering...' : 'Register Project' }}
+            {{ submitting() ? 'Submitting to Registry...' : 'Register Project' }}
           </button>
         </div>
       </form>
     </div>
   `,
   styles: [`
-    .create-page { max-width: 640px; }
-    .back-link { display: inline-block; margin-bottom: 16px; color: #3b82f6; text-decoration: none; font-size: 0.875rem; }
-    .back-link:hover { text-decoration: underline; }
-    .page-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 24px; }
-    .error-banner { background: #fef2f2; color: #ef4444; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.875rem; }
-    .create-form { background: #fff; border-radius: 12px; padding: 32px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .form-group { display: flex; flex-direction: column; margin-bottom: 20px; flex: 1; }
-    .form-label { font-size: 0.8125rem; font-weight: 600; color: #1a1a2e; margin-bottom: 6px; }
-    .form-input, .form-select { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; outline: none; transition: border-color 0.15s; background: #fff; }
-    .form-input:focus, .form-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
-    .form-error { font-size: 0.75rem; color: #ef4444; margin-top: 4px; }
-    .form-hint { font-size: 0.75rem; color: #10b981; margin-top: 4px; }
-    .form-checkbox { width: 16px; height: 16px; margin-right: 8px; accent-color: #1a1a2e; }
-    .form-row { display: flex; gap: 16px; }
-    .form-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb; }
-    .btn { padding: 10px 20px; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; text-decoration: none; display: inline-block; }
-    .btn-primary { background: #1a1a2e; color: #fff; }
-    .btn-primary:hover:not(:disabled) { background: #2a2a4e; }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-outline { background: #fff; color: #1a1a2e; border: 1px solid #d1d5db; }
-    .btn-outline:hover { background: #f0f2f5; }
+    .create-page {
+      max-width: 680px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .back-link {
+      font-size: 13px;
+      color: var(--color-ash);
+      text-decoration: none;
+    }
+    .back-link:hover {
+      color: var(--color-chalk);
+    }
+    .page-header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .header-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--color-ash);
+    }
+    .page-title {
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--color-chalk);
+    }
+    .error-banner {
+      background: var(--color-danger-dim);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: var(--color-danger);
+      padding: 12px 16px;
+      border-radius: var(--radius-cards);
+      font-size: 14px;
+    }
+    .create-form {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-ash);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .form-input, .form-select {
+      padding: 12px 14px;
+      background: var(--color-abyss);
+      border: 1px solid var(--color-graphite);
+      border-radius: 8px;
+      color: var(--color-chalk);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: var(--color-signal-mint);
+    }
+    .form-input-file {
+      padding: 10px 14px;
+      background: var(--color-abyss);
+      border: 1px solid var(--color-graphite);
+      border-radius: 8px;
+      color: var(--color-ash);
+      font-size: 13px;
+    }
+    .checkbox-container {
+      padding: 8px 0;
+    }
+    .form-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--color-chalk);
+      cursor: pointer;
+    }
+    .form-checkbox {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--color-signal-mint);
+    }
+    .form-error {
+      font-size: 12px;
+      color: var(--color-danger);
+    }
+    .form-hint {
+      font-size: 12px;
+      color: var(--color-signal-mint);
+    }
+    .form-row {
+      display: flex;
+      gap: 16px;
+    }
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-graphite);
+    }
+    @media (max-width: 600px) {
+      .form-row {
+        flex-direction: column;
+      }
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -197,7 +299,7 @@ export class ProjectCreateComponent {
           return;
         }
         this.parsedBoundary = parsed;
-      } catch (err) {
+      } catch {
         this.boundaryError.set('Invalid JSON file format');
         this.parsedBoundary = null;
       }

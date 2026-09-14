@@ -1,4 +1,4 @@
-import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Bond } from '../../interfaces/bond.interface';
 import { StatusBadgeComponent } from '../status-badge/status-badge.component';
@@ -8,60 +8,168 @@ import { StatusBadgeComponent } from '../status-badge/status-badge.component';
   standalone: true,
   imports: [CommonModule, StatusBadgeComponent],
   template: `
-    <div class="bond-card" [class.matured]="bond().status === 'Matured'" [class.defaulted]="bond().status === 'Defaulted'">
+    <div class="bond-card" [class.bond-active]="bond().status === 'Active'">
       <div class="bond-header">
-        <span class="bond-id">Bond #{{ bond().id }}</span>
+        <div class="bond-title-group">
+          <span class="bond-id">Bond #{{ bond().id }}</span>
+          <span class="credit-pill">{{ bond().creditType }}</span>
+        </div>
         <app-status-badge [status]="bond().status" variant="bond" />
       </div>
+
       <div class="bond-body">
         <div class="bond-field">
-          <span class="label">Project</span>
-          <span class="value">{{ bond().projectId | slice:0:8 }}...</span>
-        </div>
-        <div class="bond-field">
           <span class="label">Face Value</span>
-          <span class="value">{{ bond().faceValue | number }}</span>
+          <span class="value font-medium">{{ bond().faceValue | number }} USDC</span>
         </div>
         <div class="bond-field">
-          <span class="label">Maturity</span>
-          <span class="value">{{ bond().maturityDate * 1000 | date }}</span>
+          <span class="label">Maturity Date</span>
+          <span class="value">{{ bond().maturityDate * 1000 | date:'mediumDate' }}</span>
         </div>
-        <div class="bond-field">
-          <span class="label">Credit Type</span>
-          <span class="value">{{ bond().creditType }}</span>
-        </div>
-        <div class="bond-field">
-          <span class="label">Subscribed</span>
-          <span class="value">{{ bond().totalSubscribed }} / {{ bond().totalSupply }}</span>
-        </div>
-        <div class="bond-field">
-          <span class="label">Coupons</span>
-          <span class="value">{{ bond().couponSchedule.length }} payments</span>
+        <div class="bond-field full-width">
+          <div class="sub-progress-header">
+            <span class="label">Subscription</span>
+            <span class="sub-percent">{{ progressPercent() }}%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-bar" [style.width.%]="progressPercent()"></div>
+          </div>
+          <div class="sub-numbers">
+            <span>{{ bond().totalSubscribed | number }} subscribed</span>
+            <span>{{ bond().totalSupply | number }} total</span>
+          </div>
         </div>
       </div>
-      <button *ngIf="bond().status === 'Active'" class="subscribe-btn" (click)="subscribe.emit(String(bond().id))">
-        Subscribe
-      </button>
+
+      @if (bond().status === 'Active') {
+        <button class="btn btn-mint bond-action-btn" (click)="$event.stopPropagation(); subscribe.emit(String(bond().id))">
+          Subscribe to Bond
+        </button>
+      }
     </div>
   `,
   styles: [`
-    .bond-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border-left: 4px solid #22c55e; }
-    .bond-card.matured { border-left-color: #3b82f6; }
-    .bond-card.defaulted { border-left-color: #ef4444; }
-    .bond-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .bond-id { font-weight: 600; font-size: 1rem; }
-    .bond-body { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .bond-field { display: flex; flex-direction: column; }
-    .label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
-    .value { font-size: 0.875rem; color: #1a1a2e; font-weight: 500; }
-    .subscribe-btn { margin-top: 12px; width: 100%; padding: 8px 16px; background: #1a1a2e; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 0.875rem; }
-    .subscribe-btn:hover { background: #2a2a4e; }
+    .bond-card {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      padding: var(--spacing-20);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      transition: all 0.15s ease;
+    }
+    .bond-card:hover {
+      border-color: #383838;
+      transform: translateY(-1px);
+    }
+    .bond-card.bond-active {
+      border-color: rgba(63, 226, 128, 0.4);
+    }
+    .bond-card.bond-active:hover {
+      border-color: var(--color-signal-mint);
+    }
+    .bond-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--color-graphite);
+    }
+    .bond-title-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bond-id {
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: var(--color-chalk);
+      letter-spacing: 0.02em;
+    }
+    .credit-pill {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 2px 8px;
+      border-radius: var(--radius-pills);
+      background: var(--color-graphite);
+      color: var(--color-ash);
+    }
+    .bond-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .bond-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .bond-field.full-width {
+      grid-column: span 2;
+      margin-top: 4px;
+    }
+    .label {
+      font-size: 11px;
+      color: var(--color-ash);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .value {
+      font-size: 0.95rem;
+      color: var(--color-chalk);
+    }
+    .sub-progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .sub-percent {
+      font-size: 12px;
+      color: var(--color-signal-mint);
+      font-weight: 600;
+    }
+    .progress-track {
+      height: 4px;
+      background: var(--color-graphite);
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+    .progress-bar {
+      height: 100%;
+      background: var(--color-signal-mint);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+    .sub-numbers {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--color-ash);
+      font-family: var(--font-mono);
+    }
+    .bond-action-btn {
+      width: 100%;
+      padding: 10px 16px;
+      font-size: 14px;
+      border-radius: 12px;
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BondCardComponent {
   readonly bond = input.required<Bond>();
   readonly subscribe = output<string>();
+
+  readonly progressPercent = computed(() => {
+    const b = this.bond();
+    const total = Number(b.totalSupply);
+    if (!total) return 0;
+    return Math.min(100, Math.round((Number(b.totalSubscribed) / total) * 100));
+  });
 
   String(value: number): string {
     return String(value);

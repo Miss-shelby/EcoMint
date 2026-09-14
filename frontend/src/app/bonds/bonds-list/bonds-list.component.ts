@@ -15,9 +15,12 @@ import { Bond } from '../../shared/interfaces/bond.interface';
   template: `
     <div class="bonds-page">
       <div class="page-header">
-        <h1 class="page-title">Bonds</h1>
+        <div>
+          <span class="header-tag">PRIMARY BOND MARKET</span>
+          <h1 class="page-title">Bond Issuances</h1>
+        </div>
         @if (adminAccess.isAdmin()) {
-          <a class="btn btn-primary" routerLink="/bonds/issue">Issue Bond</a>
+          <a class="btn btn-primary" routerLink="/bonds/issue">+ Issue Bond</a>
         }
       </div>
 
@@ -27,30 +30,30 @@ import { Bond } from '../../shared/interfaces/bond.interface';
         <div class="error-banner">{{ error() }}</div>
       }
 
+      <div class="filter-bar">
+        <button
+          class="filter-btn"
+          [class.active]="filter() === 'all'"
+          (click)="filter.set('all')"
+        >All Bonds</button>
+        <button
+          class="filter-btn"
+          [class.active]="filter() === 'Active'"
+          (click)="filter.set('Active')"
+        >Active</button>
+        <button
+          class="filter-btn"
+          [class.active]="filter() === 'Matured'"
+          (click)="filter.set('Matured')"
+        >Matured</button>
+      </div>
+
       @if (loading()) {
         <div class="loading-section"><app-loading-spinner size="lg" /></div>
       } @else {
-        <div class="filter-bar">
-          <button
-            class="filter-btn"
-            [class.active]="filter() === 'all'"
-            (click)="filter.set('all')"
-          >All</button>
-          <button
-            class="filter-btn"
-            [class.active]="filter() === 'Active'"
-            (click)="filter.set('Active')"
-          >Active</button>
-          <button
-            class="filter-btn"
-            [class.active]="filter() === 'Matured'"
-            (click)="filter.set('Matured')"
-          >Matured</button>
-        </div>
-
         @if (filteredBonds().length === 0) {
           <div class="empty-section">
-            <p>No {{ filter() === 'all' ? '' : filter() }} bonds found.</p>
+            <p>No {{ filter() === 'all' ? '' : filter() }} bonds found in protocol.</p>
           </div>
         } @else {
           <div class="card-grid">
@@ -69,32 +72,99 @@ import { Bond } from '../../shared/interfaces/bond.interface';
     </div>
   `,
   styles: [`
-    .bonds-page { max-width: 1200px; }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .page-title { font-size: 1.5rem; font-weight: 700; }
-    .error-banner { background: #fef2f2; color: #ef4444; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.875rem; }
-    .filter-bar { display: flex; gap: 8px; margin-bottom: 20px; }
-    .filter-btn { padding: 8px 20px; border-radius: 20px; font-size: 0.8125rem; font-weight: 500; cursor: pointer; border: 1px solid #d1d5db; background: #fff; color: #1a1a2e; transition: all 0.15s; }
-    .filter-btn.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
-    .filter-btn:hover:not(.active) { background: #f0f2f5; }
-    .loading-section { display: flex; justify-content: center; padding: 48px 0; }
-    .empty-section { text-align: center; padding: 48px 0; color: #6b7280; }
-    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
-    .pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 32px; }
-    .page-info { font-size: 0.875rem; color: #6b7280; }
-    .btn { padding: 8px 16px; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; text-decoration: none; display: inline-block; }
-    .btn-primary { background: #1a1a2e; color: #fff; }
-    .btn-primary:hover { background: #2a2a4e; }
-    .btn-outline { background: #fff; color: #1a1a2e; border: 1px solid #d1d5db; }
-    .btn-outline:hover:not(:disabled) { background: #f0f2f5; }
-    .btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+    .bonds-page {
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 4px;
+    }
+    .header-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--color-ash);
+    }
+    .page-title {
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--color-chalk);
+      margin-top: 4px;
+    }
+    .error-banner {
+      background: var(--color-danger-dim);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: var(--color-danger);
+      padding: 12px 16px;
+      border-radius: var(--radius-cards);
+      font-size: 14px;
+    }
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+    }
+    .filter-btn {
+      padding: 8px 18px;
+      border-radius: var(--radius-pills);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid var(--color-graphite);
+      background: var(--color-carbon);
+      color: var(--color-ash);
+      transition: all 0.15s ease;
+      letter-spacing: 0.05em;
+    }
+    .filter-btn:hover:not(.active) {
+      color: var(--color-chalk);
+      border-color: #333333;
+    }
+    .filter-btn.active {
+      background: var(--color-graphite);
+      color: var(--color-chalk);
+      border-color: var(--color-chalk);
+    }
+    .loading-section {
+      display: flex;
+      justify-content: center;
+      padding: 64px 0;
+    }
+    .empty-section {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      text-align: center;
+      padding: 48px 0;
+      color: var(--color-ash);
+      font-size: 14px;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .page-info {
+      font-size: 13px;
+      color: var(--color-ash);
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BondsListComponent implements OnInit {
   private readonly apiService = inject(ApiService);
   private readonly router = inject(Router);
-  /** Issuance is admin-only on the API, so only show the link to an admin (#168). */
   readonly adminAccess = inject(AdminAccessService);
 
   readonly bonds = signal<Bond[]>([]);

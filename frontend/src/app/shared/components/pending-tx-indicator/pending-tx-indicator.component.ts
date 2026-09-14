@@ -17,18 +17,20 @@ const STATUS_LABELS: Record<string, string> = {
     @if (entries().length > 0) {
       <div class="tx-indicator">
         <button class="tx-toggle" (click)="open.set(!open())">
-          Transactions
+          <span class="tx-icon">⚡</span>
+          <span>Activity</span>
           @if (pendingTx.pendingCount() > 0) {
             <span class="tx-count">{{ pendingTx.pendingCount() }}</span>
           }
         </button>
         @if (open()) {
           <div class="tx-panel">
+            <div class="tx-header">Transactions</div>
             @for (entry of entries(); track entry.hash) {
               <div class="tx-row">
                 <span class="tx-op">{{ entry.operation }}</span>
                 <app-status-badge [status]="statusLabel(entry.status)" />
-                <span class="tx-hash">{{ entry.hash.slice(0, 8) }}...</span>
+                <span class="tx-hash">{{ entry.hash.slice(0, 6) }}...{{ entry.hash.slice(-4) }}</span>
               </div>
             }
           </div>
@@ -38,12 +40,78 @@ const STATUS_LABELS: Record<string, string> = {
   `,
   styles: [`
     .tx-indicator { position: relative; }
-    .tx-toggle { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; font-size: 0.8125rem; cursor: pointer; }
-    .tx-count { background: #eab308; color: #fff; border-radius: 10px; padding: 1px 7px; font-size: 0.6875rem; font-weight: 700; }
-    .tx-panel { position: absolute; right: 0; top: calc(100% + 6px); background: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); padding: 8px; width: 280px; z-index: 10; }
-    .tx-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 4px; font-size: 0.8125rem; }
-    .tx-op { text-transform: capitalize; }
-    .tx-hash { font-family: monospace; color: #6b7280; font-size: 0.75rem; }
+    .tx-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      border-radius: var(--radius-pills);
+      border: 1px solid var(--color-graphite);
+      background: var(--color-carbon);
+      color: var(--color-chalk);
+      font-family: var(--font-inter);
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.15s ease;
+    }
+    .tx-toggle:hover {
+      border-color: var(--color-ash);
+    }
+    .tx-icon {
+      font-size: 12px;
+      color: var(--color-signal-mint);
+    }
+    .tx-count {
+      background: var(--color-signal-mint);
+      color: var(--color-abyss);
+      border-radius: 10px;
+      padding: 1px 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .tx-panel {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      padding: 12px;
+      width: 300px;
+      z-index: 50;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .tx-header {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-ash);
+      margin-bottom: 8px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--color-graphite);
+    }
+    .tx-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 4px;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+    .tx-row:last-child {
+      border-bottom: none;
+    }
+    .tx-op {
+      text-transform: capitalize;
+      color: var(--color-chalk);
+      font-weight: 500;
+    }
+    .tx-hash {
+      font-family: var(--font-mono);
+      color: var(--color-ash);
+      font-size: 11px;
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

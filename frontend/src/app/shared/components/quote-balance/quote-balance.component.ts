@@ -25,7 +25,7 @@ const EMPTY_BALANCES: QuoteBalances = { USDC: 0, XLM: 0 };
     <div class="quote-panel" id="quote-balance">
       <div class="panel-header">
         <h3 class="panel-title">Escrowed Quote Balance</h3>
-        <button class="btn btn-sm btn-outline refresh-btn" (click)="loadBalances()" [disabled]="loading()">
+        <button class="btn btn-sm btn-ghost refresh-btn" (click)="loadBalances()" [disabled]="loading()">
           {{ loading() ? 'Refreshing...' : 'Refresh' }}
         </button>
       </div>
@@ -39,8 +39,14 @@ const EMPTY_BALANCES: QuoteBalances = { USDC: 0, XLM: 0 };
           <div class="balance-card" [class.active]="selectedAsset === qa" (click)="selectAsset(qa)">
             <span class="balance-asset">{{ qa }}</span>
             <div class="balance-values">
-              <div class="balance-row"><span class="balance-label">Escrowed:</span> <span class="balance-value">{{ balances()[qa] | number }}</span></div>
-              <div class="balance-row"><span class="balance-label">Wallet:</span> <span class="balance-value wallet-val">{{ walletBalances()[qa] | number }}</span></div>
+              <div class="balance-row">
+                <span class="balance-label">Escrowed</span>
+                <span class="balance-value mint">{{ balances()[qa] | number }}</span>
+              </div>
+              <div class="balance-row">
+                <span class="balance-label">Wallet</span>
+                <span class="balance-value wallet-val">{{ walletBalances()[qa] | number }}</span>
+              </div>
             </div>
           </div>
         }
@@ -53,21 +59,21 @@ const EMPTY_BALANCES: QuoteBalances = { USDC: 0, XLM: 0 };
 
       <div class="action-form">
         <div class="action-row">
-          <select class="asset-select" [(ngModel)]="selectedAsset">
+          <select class="form-select asset-select" [(ngModel)]="selectedAsset">
             @for (qa of quoteAssets; track qa) {
               <option [value]="qa">{{ qa }}</option>
             }
           </select>
           <input
             type="number"
-            class="amount-input"
+            class="form-input amount-input"
             [(ngModel)]="amount"
             placeholder="Amount"
             min="1"
           />
         </div>
         <button
-          class="btn btn-primary action-btn"
+          class="btn btn-mint action-btn"
           [disabled]="submitting() || !amount || amount < 1"
           (click)="onSubmit()"
         >
@@ -83,38 +89,143 @@ const EMPTY_BALANCES: QuoteBalances = { USDC: 0, XLM: 0 };
     </div>
   `,
   styles: [`
-    .quote-panel { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-    .panel-title { font-size: 1rem; font-weight: 600; margin: 0; }
-    .refresh-btn { font-size: 0.75rem; padding: 4px 10px; }
-    .balance-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
-    .balance-card { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border: 1px solid #e5e7eb; border-radius: 10px; cursor: pointer; transition: border-color 0.15s; }
-    .balance-card.active { border-color: #3b82f6; background: #f8fafc; }
-    .balance-asset { font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
-    .balance-values { display: flex; flex-direction: column; gap: 4px; }
-    .balance-row { display: flex; justify-content: space-between; align-items: center; }
-    .balance-label { font-size: 0.75rem; color: #6b7280; }
-    .balance-value { font-size: 1.125rem; font-weight: 700; color: #1a1a2e; }
-    .wallet-val { font-size: 1rem; color: #4b5563; }
-    .action-tabs { display: flex; gap: 8px; margin-bottom: 12px; }
-    .tab-btn { padding: 6px 14px; border-radius: 8px; font-size: 0.8125rem; font-weight: 500; cursor: pointer; border: 1px solid #d1d5db; background: #fff; color: #6b7280; }
-    .tab-btn.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
-    .action-form { display: flex; flex-direction: column; gap: 10px; }
-    .action-row { display: flex; gap: 8px; }
-    .asset-select, .amount-input { padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; outline: none; }
-    .asset-select:focus, .amount-input:focus { border-color: #3b82f6; }
-    .asset-select { width: 110px; background: #fff; }
-    .amount-input { flex: 1; }
-    .action-btn { align-self: flex-end; }
-    .btn { padding: 8px 16px; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; display: inline-block; }
-    .btn-sm { padding: 6px 12px; font-size: 0.8125rem; }
-    .btn-primary { background: #1a1a2e; color: #fff; }
-    .btn-primary:hover:not(:disabled) { background: #2a2a4e; }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-outline { background: #fff; color: #1a1a2e; border: 1px solid #d1d5db; }
-    .btn-outline:hover:not(:disabled) { background: #f0f2f5; }
-    .error-msg { font-size: 0.8125rem; color: #ef4444; padding: 8px; background: #fef2f2; border-radius: 6px; }
-    .success-msg { font-size: 0.8125rem; color: #22c55e; padding: 8px; background: #f0fdf4; border-radius: 6px; word-break: break-all; }
+    .quote-panel {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      padding: var(--spacing-24);
+    }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .panel-title {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--color-chalk);
+      letter-spacing: 0.02em;
+    }
+    .balance-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .balance-card {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 16px;
+      border: 1px solid var(--color-graphite);
+      background: var(--color-abyss);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .balance-card:hover {
+      border-color: #444444;
+    }
+    .balance-card.active {
+      border-color: var(--color-signal-mint);
+    }
+    .balance-asset {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-ash);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .balance-values {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .balance-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .balance-label {
+      font-size: 11px;
+      color: var(--color-ash);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .balance-value {
+      font-size: 1.15rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      color: var(--color-chalk);
+    }
+    .balance-value.mint {
+      color: var(--color-signal-mint);
+    }
+    .wallet-val {
+      font-size: 0.95rem;
+      color: var(--color-ash);
+    }
+    .action-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .tab-btn {
+      padding: 8px 16px;
+      border-radius: var(--radius-pills);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      border: 1px solid var(--color-graphite);
+      background: var(--color-abyss);
+      color: var(--color-ash);
+      transition: all 0.15s ease;
+    }
+    .tab-btn.active {
+      background: var(--color-carbon);
+      color: var(--color-chalk);
+      border-color: var(--color-ash);
+    }
+    .action-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .action-row {
+      display: flex;
+      gap: 12px;
+    }
+    .asset-select {
+      width: 110px;
+    }
+    .amount-input {
+      flex: 1;
+      font-family: var(--font-mono);
+    }
+    .action-btn {
+      align-self: flex-end;
+      padding: 10px 20px;
+      font-size: 14px;
+    }
+    .error-msg {
+      font-size: 12px;
+      color: var(--color-danger);
+      padding: 10px 14px;
+      background: var(--color-danger-dim);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 8px;
+    }
+    .success-msg {
+      font-size: 12px;
+      color: var(--color-signal-mint);
+      padding: 10px 14px;
+      background: var(--color-signal-mint-dim);
+      border: 1px solid rgba(63, 226, 128, 0.2);
+      border-radius: 8px;
+      word-break: break-all;
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

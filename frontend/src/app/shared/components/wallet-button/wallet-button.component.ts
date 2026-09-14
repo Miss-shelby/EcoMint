@@ -7,43 +7,104 @@ import { WalletService } from '../../../auth/wallet.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <button
-      *ngIf="!walletService.isConnected()"
-      type="button"
-      (click)="connect()"
-      class="wallet-btn"
-      [disabled]="walletService.isConnecting()"
-      [attr.aria-busy]="walletService.isConnecting()"
-      [attr.aria-describedby]="walletService.errorMessage() ? 'wallet-status' : null"
-    >
-      Connect Wallet
-    </button>
-    <button
-      *ngIf="walletService.isConnected()"
-      type="button"
-      class="wallet-btn connected"
-      (click)="walletService.refreshAccountState()"
-      [attr.aria-label]="'Connected wallet ' + walletService.address() + '. Activate to refresh wallet state.'"
-    >
-      {{ walletService.address()?.slice(0, 6) }}...{{ walletService.address()?.slice(-4) }}
-    </button>
-    <p
-      *ngIf="walletService.errorMessage()"
-      id="wallet-status"
-      class="wallet-status"
-      role="status"
-      aria-live="polite"
-    >
-      {{ walletService.errorMessage() }}
-    </p>
+    @if (!walletService.isConnected()) {
+      <button
+        type="button"
+        (click)="connect()"
+        class="wallet-connect-pill"
+        [disabled]="walletService.isConnecting()"
+        [attr.aria-busy]="walletService.isConnecting()"
+      >
+        {{ walletService.isConnecting() ? 'Connecting...' : 'Connect Wallet' }}
+      </button>
+    } @else {
+      <button
+        type="button"
+        class="wallet-connected-pill"
+        (click)="walletService.refreshAccountState()"
+        [attr.aria-label]="'Connected wallet ' + walletService.address() + '. Activate to refresh state.'"
+      >
+        <span class="mint-indicator-dot"></span>
+        <span class="wallet-address">{{ walletService.address()?.slice(0, 5) }}...{{ walletService.address()?.slice(-4) }}</span>
+      </button>
+    }
+
+    @if (walletService.errorMessage()) {
+      <p class="wallet-error-text" role="status" aria-live="polite">
+        {{ walletService.errorMessage() }}
+      </p>
+    }
   `,
   styles: [`
-    .wallet-btn { padding: 8px 16px; border: 1px solid #1a1a2e; border-radius: 8px; background: transparent; color: #1a1a2e; cursor: pointer; font-size: 0.875rem; font-weight: 500; }
-    .wallet-btn:focus-visible { outline: 3px solid #2f80ed; outline-offset: 2px; }
-    .wallet-btn:disabled { opacity: 0.65; cursor: wait; }
-    .wallet-btn:hover { background: #1a1a2e; color: #fff; }
-    .wallet-btn.connected { background: #1a1a2e; color: #fff; font-family: monospace; }
-    .wallet-status { margin: 0.25rem 0 0; font-size: 0.75rem; color: #8a4b00; }
+    :host {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    /* Connect Wallet Pill: Inverted White Fill on Dark Console */
+    .wallet-connect-pill {
+      background-color: var(--color-chalk);
+      color: var(--color-abyss);
+      font-family: var(--font-inter);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      padding: 9px 20px;
+      border-radius: var(--radius-pills);
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s ease, transform 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .wallet-connect-pill:hover:not(:disabled) {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+
+    .wallet-connect-pill:disabled {
+      opacity: 0.5;
+      cursor: wait;
+    }
+
+    /* Connected State: Dark Carbon with Mint Live Indicator */
+    .wallet-connected-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background-color: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      color: var(--color-chalk);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      padding: 7px 16px;
+      border-radius: var(--radius-pills);
+      cursor: pointer;
+      transition: border-color 0.15s ease;
+    }
+
+    .wallet-connected-pill:hover {
+      border-color: var(--color-ash);
+    }
+
+    .mint-indicator-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: var(--color-signal-mint);
+      box-shadow: 0 0 8px rgba(63, 226, 128, 0.6);
+    }
+
+    .wallet-address {
+      color: var(--color-chalk);
+    }
+
+    .wallet-error-text {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--color-danger);
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

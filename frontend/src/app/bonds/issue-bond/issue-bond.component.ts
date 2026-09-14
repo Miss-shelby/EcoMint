@@ -7,11 +7,8 @@ import { AdminIntentService } from '../../shared/services/admin-intent.service';
 import { AdminSecretPromptComponent } from '../../shared/components/admin-secret-prompt/admin-secret-prompt.component';
 import { CreateBondDto } from '../../shared/interfaces/bond.interface';
 import { appErrorMessage } from '../../shared/errors/api-error';
-import { PendingTransactionsService } from '../../shared/services/pending-transactions.service';
 import {
   couponScheduleGroupValidator,
-  parseCouponSchedule,
-  toEpochSeconds,
 } from '../../shared/validators/coupon-schedule.validators';
 
 @Component({
@@ -20,31 +17,35 @@ import {
   imports: [CommonModule, RouterModule, ReactiveFormsModule, AdminSecretPromptComponent],
   template: `
     <div class="issue-page">
-      <a class="back-link" routerLink="/bonds">← Back to Bonds</a>
-      <h1 class="page-title">Issue New Bond</h1>
+      <a class="back-link" routerLink="/bonds">&larr; Back to Bonds</a>
+      <div class="page-header">
+        <span class="header-tag">PRIMARY ISSUANCE CREATOR</span>
+        <h1 class="page-title">Issue Nature-Based Bond</h1>
+      </div>
 
       @if (error()) {
         <div class="error-banner">{{ error() }}</div>
       }
       @if (success()) {
-        <div class="success-banner">Bond issued successfully!</div>
+        <div class="success-banner">Bond issued successfully! Navigating to issuances...</div>
       }
 
-      <!-- Issuance is behind IntentGuard on the API; say so up front (#166). -->
       <div class="intent-banner" [class.unlocked]="adminIntent.hasSecret()">
         @if (adminIntent.hasSecret()) {
-          <span>
-            Admin session unlocked as
-            <span class="mono">{{ adminIntent.unlockedAddress() }}</span>. Submissions will be signed.
-          </span>
+          <div class="intent-info">
+            <span class="badge-dot"></span>
+            <span>
+              Admin session unlocked as
+              <span class="mono">{{ adminIntent.unlockedAddress() }}</span>.
+            </span>
+          </div>
           <button type="button" class="btn btn-outline btn-sm" (click)="adminIntent.clearAdminSecret()">Lock</button>
         } @else {
-          <span>
-            Issuing a bond requires a signed admin intent. You will be asked for your
-            admin secret key when you submit.
-          </span>
+          <div class="intent-info">
+            <span>Issuing a bond requires a signed admin intent key.</span>
+          </div>
           <button type="button" class="btn btn-outline btn-sm" (click)="secretPromptOpen.set(true)">
-            Unlock now
+            Unlock Session
           </button>
         }
       </div>
@@ -52,7 +53,7 @@ import {
       <form class="issue-form" [formGroup]="form" (ngSubmit)="onSubmit()">
         <div class="form-group">
           <label class="form-label" for="projectId">Project ID</label>
-          <input id="projectId" class="form-input" formControlName="projectId" placeholder="Enter project ID" />
+          <input id="projectId" class="form-input mono" formControlName="projectId" placeholder="Enter Project UUID / ID" />
           @if (form.get('projectId')?.invalid && form.get('projectId')?.touched) {
             <span class="form-error">Project ID is required</span>
           }
@@ -60,7 +61,7 @@ import {
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="faceValue">Face Value</label>
+            <label class="form-label" for="faceValue">Face Value (USDC)</label>
             <input id="faceValue" type="number" class="form-input" formControlName="faceValue" placeholder="100000" />
             @if (form.get('faceValue')?.invalid && form.get('faceValue')?.touched) {
               <span class="form-error">Enter a positive value</span>
@@ -79,7 +80,7 @@ import {
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="totalSupply">Total Supply</label>
+            <label class="form-label" for="totalSupply">Total Supply (Units)</label>
             <input id="totalSupply" type="number" class="form-input" formControlName="totalSupply" placeholder="1000" />
             @if (form.get('totalSupply')?.invalid && form.get('totalSupply')?.touched) {
               <span class="form-error">Enter a positive value</span>
@@ -95,8 +96,8 @@ import {
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="couponSchedule">Coupon Schedule</label>
-          <input id="couponSchedule" class="form-input" formControlName="couponSchedule" placeholder="Comma-separated epoch seconds, e.g. 1750000000, 1781536000" />
+          <label class="form-label" for="couponSchedule">Coupon Schedule (Epoch Timestamps)</label>
+          <input id="couponSchedule" class="form-input mono" formControlName="couponSchedule" placeholder="Comma-separated epoch seconds, e.g. 1750000000, 1781536000" />
           @if (form.get('couponSchedule')?.hasError('required') && form.get('couponSchedule')?.touched) {
             <span class="form-error">Enter at least one coupon date</span>
           }
@@ -117,7 +118,7 @@ import {
         <div class="form-actions">
           <a class="btn btn-outline" routerLink="/bonds">Cancel</a>
           <button type="submit" class="btn btn-primary" [disabled]="form.invalid || submitting()">
-            {{ submitting() ? 'Issuing...' : 'Issue Bond' }}
+            {{ submitting() ? 'Issuing On-Chain...' : 'Issue Bond' }}
           </button>
         </div>
       </form>
@@ -125,7 +126,7 @@ import {
       @if (secretPromptOpen()) {
         <app-admin-secret-prompt
           action="Issue a new bond"
-          description="POST /bonds is verified by the API's step-up IntentGuard."
+          description="POST /bonds is verified by the protocol IntentGuard."
           (unlocked)="onSecretUnlocked()"
           (cancelled)="onSecretCancelled()"
         />
@@ -133,30 +134,129 @@ import {
     </div>
   `,
   styles: [`
-    .issue-page { max-width: 640px; }
-    .back-link { display: inline-block; margin-bottom: 16px; color: #3b82f6; text-decoration: none; font-size: 0.875rem; }
-    .back-link:hover { text-decoration: underline; }
-    .page-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 24px; }
-    .error-banner { background: #fef2f2; color: #ef4444; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.875rem; }
-    .success-banner { background: #f0fdf4; color: #22c55e; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.875rem; }
-    .issue-form { background: #fff; border-radius: 12px; padding: 32px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .form-group { display: flex; flex-direction: column; margin-bottom: 20px; flex: 1; }
-    .form-label { font-size: 0.8125rem; font-weight: 600; color: #1a1a2e; margin-bottom: 6px; }
-    .form-input, .form-select { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; outline: none; transition: border-color 0.15s; background: #fff; }
-    .form-input:focus, .form-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
-    .form-error { font-size: 0.75rem; color: #ef4444; margin-top: 4px; }
-    .form-row { display: flex; gap: 16px; }
-    .form-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb; }
-    .btn { padding: 10px 20px; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; text-decoration: none; display: inline-block; }
-    .btn-primary { background: #1a1a2e; color: #fff; }
-    .btn-primary:hover:not(:disabled) { background: #2a2a4e; }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-outline { background: #fff; color: #1a1a2e; border: 1px solid #d1d5db; }
-    .btn-outline:hover { background: #f0f2f5; }
-    .btn-sm { padding: 6px 12px; font-size: 0.8125rem; }
-    .intent-banner { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.8125rem; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
-    .intent-banner.unlocked { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
-    .mono { font-family: monospace; word-break: break-all; }
+    .issue-page {
+      max-width: 680px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .back-link {
+      font-size: 13px;
+      color: var(--color-ash);
+      text-decoration: none;
+    }
+    .back-link:hover {
+      color: var(--color-chalk);
+    }
+    .page-header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .header-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--color-ash);
+    }
+    .page-title {
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--color-chalk);
+    }
+    .error-banner {
+      background: var(--color-danger-dim);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: var(--color-danger);
+      padding: 12px 16px;
+      border-radius: var(--radius-cards);
+      font-size: 14px;
+    }
+    .success-banner {
+      background: var(--color-signal-mint-dim);
+      border: 1px solid rgba(63, 226, 128, 0.2);
+      color: var(--color-signal-mint);
+      padding: 12px 16px;
+      border-radius: var(--radius-cards);
+      font-size: 14px;
+    }
+    .intent-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: var(--radius-cards);
+      font-size: 13px;
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      color: var(--color-ash);
+    }
+    .intent-banner.unlocked {
+      border-color: rgba(63, 226, 128, 0.3);
+      color: var(--color-chalk);
+    }
+    .intent-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .issue-form {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-ash);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .form-input, .form-select {
+      padding: 12px 14px;
+      background: var(--color-abyss);
+      border: 1px solid var(--color-graphite);
+      border-radius: 8px;
+      color: var(--color-chalk);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: var(--color-signal-mint);
+    }
+    .form-error {
+      font-size: 12px;
+      color: var(--color-danger);
+    }
+    .form-row {
+      display: flex;
+      gap: 16px;
+    }
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-graphite);
+    }
+    @media (max-width: 600px) {
+      .form-row {
+        flex-direction: column;
+      }
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -186,8 +286,6 @@ export class IssueBondComponent {
   onSubmit(): void {
     if (this.form.invalid || this.submitting()) return;
 
-    // The API rejects POST /bonds without a fresh signed intent, so collect the
-    // admin secret before the request goes out rather than after a 401 (#166).
     if (!this.adminIntent.hasSecret()) {
       this.error.set('');
       this.secretPromptOpen.set(true);
@@ -197,7 +295,6 @@ export class IssueBondComponent {
     this.submit();
   }
 
-  /** The admin unlocked the session from the prompt: continue the submission. */
   onSecretUnlocked(): void {
     this.secretPromptOpen.set(false);
     if (this.form.valid) this.submit();
@@ -221,9 +318,9 @@ export class IssueBondComponent {
       totalSupply: Number(formValue.totalSupply),
       maturityDate: Math.floor(new Date(formValue.maturityDate).getTime() / 1000),
       couponSchedule: String(formValue.couponSchedule || '')
-      .split(',')
-      .map((v: string) => Number(v.trim()))
-      .filter((v: number) => Number.isFinite(v) && v > 0),
+        .split(',')
+        .map((v: string) => Number(v.trim()))
+        .filter((v: number) => Number.isFinite(v) && v > 0),
     };
 
     this.apiService.issueBond(data).subscribe({

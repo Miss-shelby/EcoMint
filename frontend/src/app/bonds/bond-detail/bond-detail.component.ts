@@ -34,38 +34,46 @@ function appErrorMessage(err: unknown, fallback: string): string {
   providers: [BondDetailReloadCoordinator],
   template: `
     <div class="detail-page">
-      <a class="back-link" routerLink="/bonds">← Back to Bonds</a>
+      <div class="page-top">
+        <a class="back-link" routerLink="/bonds">&larr; Back to Bonds</a>
+        @if (refreshing()) {
+          <div class="refresh-indicator">
+            <span class="badge-dot"></span>
+            <span>Syncing On-Chain State...</span>
+          </div>
+        }
+      </div>
 
       <app-connect-prompt action="Subscribing, claiming credits, and transferring tokens need a signed-in wallet." />
-
-      @if (refreshing()) {
-        <div class="refresh-banner">Refreshing bond data…</div>
-      }
 
       @if (bond(); as b) {
         <div class="detail-grid">
           <div class="detail-card main">
             <div class="detail-header">
-              <h1 class="detail-title">Bond #{{ b.id }}</h1>
+              <div>
+                <span class="header-tag">BOND ISSUANCE SPECIFICATION</span>
+                <h1 class="detail-title">Bond #{{ b.id }}</h1>
+              </div>
               <app-status-badge [status]="b.status" variant="bond" />
             </div>
 
             <div class="maturity-banner" [class.frozen]="maturityReached()">
               @if (maturityReached()) {
-                <strong>Frozen for trading.</strong>
-                Maturity date ({{ b.maturityDate * 1000 | date:'mediumDate' }}) has been reached.
-                Subscriptions and transfers are disabled.
+                <strong>FROZEN FOR TRADING:</strong>
+                Maturity date ({{ b.maturityDate * 1000 | date:'mediumDate' }}) has been reached. Subscriptions and transfers disabled.
               } @else {
-                <strong>Matures in:</strong> {{ countdown() }}
+                <span class="mat-label">MATURES IN:</span>
+                <span class="mat-time">{{ countdown() }}</span>
+                <span class="mat-date">({{ b.maturityDate * 1000 | date:'mediumDate' }})</span>
               }
             </div>
 
             @if (couponEligibility() && !couponEligibility()!.eligible) {
               <div class="coupon-warning">
-                <strong>Coupon distribution blocked.</strong>
+                <strong>COUPON DISTRIBUTION BLOCKED:</strong>
                 The referenced oracle report is disputed or rejected.
                 @for (reason of couponEligibility()!.reasons; track reason) {
-                  <div class="coupon-reason">• {{ reason }}</div>
+                  <div class="coupon-reason">&bull; {{ reason }}</div>
                 }
               </div>
             }
@@ -77,33 +85,36 @@ function appErrorMessage(err: unknown, fallback: string): string {
               </div>
               <div class="detail-field">
                 <span class="field-label">Face Value</span>
-                <span class="field-value">{{ b.faceValue | number }}</span>
+                <span class="field-value mint">{{ b.faceValue | number }} USDC</span>
               </div>
               <div class="detail-field">
                 <span class="field-label">Credit Type</span>
                 <span class="field-value">{{ b.creditType }}</span>
               </div>
               <div class="detail-field">
-                <span class="field-label">Maturity Date</span>
-                <span class="field-value">{{ b.maturityDate * 1000 | date }}</span>
-              </div>
-              <div class="detail-field">
                 <span class="field-label">Total Supply</span>
                 <span class="field-value">{{ b.totalSupply | number }}</span>
               </div>
               <div class="detail-field">
-                <span class="field-label">Created</span>
+                <span class="field-label">Subscribed Total</span>
+                <span class="field-value">{{ b.totalSubscribed | number }}</span>
+              </div>
+              <div class="detail-field">
+                <span class="field-label">Issuance Date</span>
                 <span class="field-value">{{ b.createdAt | date }}</span>
               </div>
             </div>
 
             <div class="coupon-section">
-              <h3 class="section-title">Coupon Schedule ({{ b.couponSchedule.length }} payments)</h3>
+              <div class="section-title-group">
+                <h3 class="section-title">Coupon Schedule</h3>
+                <span class="pill-tag">{{ b.couponSchedule.length }} Payments</span>
+              </div>
               <ul class="coupon-list">
                 @for (ts of b.couponSchedule; track ts; let i = $index) {
                   <li class="coupon-item">
                     <span class="coupon-index">Period {{ i + 1 }}</span>
-                    <span class="coupon-date">{{ ts | date }}</span>
+                    <span class="coupon-date mono">{{ ts | date:'mediumDate' }}</span>
                   </li>
                 }
               </ul>
@@ -111,17 +122,21 @@ function appErrorMessage(err: unknown, fallback: string): string {
           </div>
 
           <div class="detail-card sidebar">
-            <h3 class="section-title">Subscription Progress</h3>
-            <div class="progress-bar">
-              <div class="progress-fill" [style.width.%]="subscribeProgress()"></div>
-            </div>
-            <div class="progress-text">
-              {{ b.totalSubscribed | number }} / {{ b.totalSupply | number }}
-              ({{ subscribeProgress() }}%)
+            <div class="progress-section">
+              <div class="section-title-group">
+                <h3 class="section-title">Subscription Progress</h3>
+                <span class="mono percent">{{ subscribeProgress() }}%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="subscribeProgress()"></div>
+              </div>
+              <div class="progress-text mono">
+                {{ b.totalSubscribed | number }} / {{ b.totalSupply | number }} UNITS
+              </div>
             </div>
 
-            <div class="subscribe-section">
-              <h3 class="section-title">Subscribe</h3>
+            <div class="sidebar-block">
+              <h3 class="section-title">Subscribe to Issuance</h3>
               @if (b.status !== 'Active' || maturityReached()) {
                 @if (maturityReached()) {
                   <p class="status-notice">This bond has reached maturity and is frozen for trading.</p>
@@ -130,15 +145,17 @@ function appErrorMessage(err: unknown, fallback: string): string {
                 }
               } @else {
                 <div class="subscribe-form">
-                  <label class="form-label" for="amount">Amount</label>
-                  <input
-                    id="amount"
-                    type="number"
-                    class="form-input"
-                    [(ngModel)]="subscribeAmount"
-                    placeholder="Enter amount"
-                    min="1"
-                  />
+                  <div class="form-group">
+                    <label class="form-label" for="amount">Units to Purchase</label>
+                    <input
+                      id="amount"
+                      type="number"
+                      class="form-input"
+                      [(ngModel)]="subscribeAmount"
+                      placeholder="e.g. 10"
+                      min="1"
+                    />
+                  </div>
                   <button
                     class="btn btn-primary subscribe-btn"
                     [disabled]="!subscribeAmount || subscribeAmount < 1 || subscribeSubmitting() || !authService.sessionReady()"
@@ -147,10 +164,10 @@ function appErrorMessage(err: unknown, fallback: string): string {
                     {{ subscribeSubmitting() ? 'Subscribing...' : 'Subscribe' }}
                   </button>
                   @if (!authService.sessionReady()) {
-                    <p class="auth-hint">Connect your wallet and sign in to subscribe.</p>
+                    <p class="auth-hint">Connect wallet to subscribe.</p>
                   }
                   @if (subscribeSuccess()) {
-                    <div class="success-msg">Subscribed! Tx: {{ subscribeTx() }}</div>
+                    <div class="success-msg mono">Subscribed! Tx: {{ subscribeTx() }}</div>
                   }
                   @if (subscribeError()) {
                     <div class="error-msg">{{ subscribeError() }}</div>
@@ -159,48 +176,49 @@ function appErrorMessage(err: unknown, fallback: string): string {
               }
             </div>
 
-            <div class="marketplace-link">
-              <a class="btn btn-outline" [routerLink]="['/marketplace']" [queryParams]="{ bondId: b.id }">
-                View on Marketplace
+            <div class="sidebar-block">
+              <a class="btn btn-outline full-width" [routerLink]="['/marketplace']" [queryParams]="{ bondId: b.id }">
+                Trade on DEX Marketplace &rarr;
               </a>
             </div>
 
-            <div class="holders-section">
+            <div class="sidebar-block">
               <h3 class="section-title">Holders ({{ holders().length }})</h3>
               @if (sectionLoading().holders) {
-                <div class="muted">Loading holders…</div>
+                <div class="muted">Loading holders...</div>
               } @else if (holders().length === 0) {
                 <div class="muted">No holders yet.</div>
               } @else {
                 <ul class="holders-list">
                   @for (h of holders(); track h.address) {
                     <li class="holder-item">
-                      <span class="mono">{{ h.address }}</span>
-                      <span class="holder-balance">{{ h.balance | number }}</span>
+                      <span class="mono">{{ h.address.slice(0, 8) }}...{{ h.address.slice(-6) }}</span>
+                      <span class="holder-balance mono">{{ h.balance | number }}</span>
                     </li>
                   }
                 </ul>
               }
             </div>
 
-            <div class="claim-section">
+            <div class="sidebar-block">
               <h3 class="section-title">Claim Credits</h3>
               @if (claimableLoading()) {
-                <div class="muted">Loading claimable credits…</div>
+                <div class="muted">Loading claimable credits...</div>
               } @else if (claimable()) {
                 <div class="claimable-total">
-                  Claimable: {{ fmtCredits(claimable()!.total) }} credits
+                  Claimable: <span class="mint mono">{{ fmtCredits(claimable()!.total) }}</span> credits
                 </div>
                 @if (claimable()!.details.length > 0) {
                   <div class="claimable-detail-title">Provenance</div>
                   <ul class="claimable-list">
                     @for (d of claimable()!.details; track d.periodIndex + '-' + d.reportId) {
                       <li class="claimable-item">
-                        <span class="claimable-period">Period {{ d.periodIndex + 1 }}</span>
-                        <span class="claimable-amount">{{ fmtCredits(d.amount) }}</span>
+                        <div class="claimable-header">
+                          <span class="claimable-period">Period {{ d.periodIndex + 1 }}</span>
+                          <span class="claimable-amount mono">{{ fmtCredits(d.amount) }}</span>
+                        </div>
                         <span class="claimable-meta">
-                          {{ d.creditType }} · {{ d.startTime * 1000 | date:'mediumDate' }}
-                          – {{ d.endTime * 1000 | date:'mediumDate' }}
+                          {{ d.creditType }} &bull; {{ d.startTime * 1000 | date:'mediumDate' }} &ndash; {{ d.endTime * 1000 | date:'mediumDate' }}
                         </span>
                       </li>
                     }
@@ -215,10 +233,10 @@ function appErrorMessage(err: unknown, fallback: string): string {
                 {{ claimSubmitting() ? 'Claiming...' : 'Claim Accrued Credits' }}
               </button>
               @if (!authService.sessionReady()) {
-                <p class="auth-hint">Connect your wallet and sign in to claim credits.</p>
+                <p class="auth-hint">Connect wallet to claim.</p>
               }
               @if (claimSuccess()) {
-                <div class="success-msg">
+                <div class="success-msg mono">
                   Claimed {{ claimCredits() }} credits! Tx: {{ claimTx() }}
                 </div>
               }
@@ -227,49 +245,46 @@ function appErrorMessage(err: unknown, fallback: string): string {
               }
             </div>
 
-            <div class="transfer-section">
+            <div class="sidebar-block">
               <h3 class="section-title">Transfer Tokens</h3>
-              <button
-                class="btn btn-outline refresh-btn"
-                [disabled]="refreshing()"
-                (click)="onRefresh()"
-              >
-                {{ refreshing() ? 'Refreshing…' : 'Refresh' }}
-              </button>
               @if (maturityReached()) {
                 <p class="status-notice">Transfers are disabled after the maturity date.</p>
               } @else {
                 <div class="subscribe-form">
-                  <label class="form-label" for="transferTo">Recipient Address</label>
-                  <input
-                    id="transferTo"
-                    type="text"
-                    class="form-input"
-                    [(ngModel)]="transferTo"
-                    placeholder="G... recipient public key"
-                  />
-                  <label class="form-label" for="transferAmount">Amount</label>
-                  <input
-                    id="transferAmount"
-                    type="number"
-                    class="form-input"
-                    [(ngModel)]="transferAmount"
-                    placeholder="Enter amount"
-                    min="1"
-                  />
+                  <div class="form-group">
+                    <label class="form-label" for="transferTo">Recipient Address (G...)</label>
+                    <input
+                      id="transferTo"
+                      type="text"
+                      class="form-input mono"
+                      [(ngModel)]="transferTo"
+                      placeholder="G..."
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label" for="transferAmount">Amount</label>
+                    <input
+                      id="transferAmount"
+                      type="number"
+                      class="form-input"
+                      [(ngModel)]="transferAmount"
+                      placeholder="Units"
+                      min="1"
+                    />
+                  </div>
                   <button
-                    class="btn btn-primary transfer-btn"
+                    class="btn btn-outline transfer-btn"
                     [disabled]="!transferTo || !transferAmount || transferAmount < 1 || transferSubmitting() || !authService.sessionReady()"
                     (click)="onTransfer()"
                   >
-                    {{ transferSubmitting() ? 'Transferring...' : 'Transfer' }}
+                    {{ transferSubmitting() ? 'Transferring...' : 'Transfer Units' }}
                   </button>
                   @if (!authService.sessionReady()) {
-                    <p class="auth-hint">Connect your wallet and sign in to transfer.</p>
+                    <p class="auth-hint">Connect wallet to transfer.</p>
                   }
                   @if (transferSuccess()) {
-                    <div class="success-msg">
-                      Transferred {{ transferAmount }} tokens to {{ transferTo }}! Tx: {{ transferTx() }}
+                    <div class="success-msg mono">
+                      Transferred {{ transferAmount }} units! Tx: {{ transferTx() }}
                     </div>
                   }
                   @if (transferError()) {
@@ -280,15 +295,14 @@ function appErrorMessage(err: unknown, fallback: string): string {
             </div>
 
             @if (isAdmin()) {
-              <div class="admin-section">
-                <h3 class="section-title">Admin: Undistributed Coupons</h3>
-                <p class="admin-note">
-                  Integer-division remainder from coupon distributions, recoverable via sweep.
-                </p>
+              <div class="sidebar-block admin-block">
+                <div class="admin-header">
+                  <span class="security-tag">ADMIN PROTOCOL CONTROLS</span>
+                </div>
                 @if (undistributed() !== null) {
                   <div class="undistributed-total">
-                    <span class="field-label">Undistributed Total</span>
-                    <span class="field-value">{{ undistributed() | number }}</span>
+                    <span class="field-label">Undistributed Coupons</span>
+                    <span class="field-value mono mint">{{ undistributed() | number }}</span>
                   </div>
                   <button
                     class="btn btn-primary sweep-btn"
@@ -297,59 +311,22 @@ function appErrorMessage(err: unknown, fallback: string): string {
                   >
                     {{ sweepSubmitting() ? 'Sweeping...' : 'Sweep Undistributed' }}
                   </button>
-                  @if (adminIntent.hasSecret()) {
-                    <button type="button" class="btn btn-outline lock-btn" (click)="adminIntent.clearAdminSecret()">
-                      Lock admin session
-                    </button>
-                  }
-                } @else if (undistributedError()) {
-                  <div class="error-msg">{{ undistributedError() }}</div>
-                } @else {
-                  <div class="admin-note">Loading undistributed total...</div>
                 }
                 @if (sweepSuccess()) {
-                  <div class="success-msg">
-                    Swept {{ sweepSwept() }} credits! Tx: {{ sweepTx() }}
-                  </div>
+                  <div class="success-msg mono">Swept {{ sweepSwept() }} credits! Tx: {{ sweepTx() }}</div>
                 }
                 @if (sweepError()) {
                   <div class="error-msg">{{ sweepError() }}</div>
                 }
-                <!-- Coupon Distribute -->
-                @if (couponEligibility() && couponEligibility()!.eligible) {
-                  <div class="coupon-distribute" *ngIf="!sweepSubmitting() && !adminIntent.hasSecret()">
-                    <button class="btn btn-outline distribute-coupon-btn" (click)="onDistributeCoupon()">
-                      Distribute Coupon
-                    </button>
-                  </div>
-                  @if (adminIntent.hasSecret()) {
-                    <app-admin-secret-prompt
-                      action="Distribute coupon"
-                      [description]="'Bond #' + b.id + ' — distribute coupon.'"
-                      (unlocked)="onSecretUnlocked()"
-                      (cancelled)="secretPromptOpen.set(false)"
-                    />
-                  }
-                } @else if (couponEligibility()) {
-                  <div class="coupon-distribute muted">
-                    <strong>Coupon distribution blocked.</strong>
-                    The referenced oracle report is disputed or rejected.
-                  </div>
-                }
-                <!-- Mature Bond -->
+
                 @if (!maturityReached()) {
                   <button
-                    class="btn btn-primary mature-btn"
+                    class="btn btn-outline mature-btn"
                     [disabled]="maturityReached() || matureSubmitting() || !authService.sessionReady()"
                     (click)="onMature()"
                   >
                     {{ matureSubmitting() ? 'Maturing...' : 'Mature Bond' }}
                   </button>
-                } @else {
-                  <p class="status-notice">Bond is already matured.</p>
-                }
-                <!-- Reconcile Holders -->
-                @if (!maturityReached()) {
                   <button
                     class="btn btn-outline reconcile-btn"
                     [disabled]="reconcileSubmitting() || !authService.sessionReady()"
@@ -357,11 +334,10 @@ function appErrorMessage(err: unknown, fallback: string): string {
                   >
                     Reconcile Holders
                   </button>
-                } @else {
-                  <p class="status-notice">Reconcile unavailable for matured bonds.</p>
                 }
               </div>
             }
+
             @if (secretPromptOpen()) {
               <app-admin-secret-prompt
                 action="Sweep undistributed coupons"
@@ -380,72 +356,356 @@ function appErrorMessage(err: unknown, fallback: string): string {
     </div>
   `,
   styles: [`
-    .detail-page { max-width: 1200px; }
-    .back-link { display: inline-block; margin-bottom: 24px; color: #3b82f6; text-decoration: none; font-size: 0.875rem; }
-    .back-link:hover { text-decoration: underline; }
-    .loading-section { display: flex; justify-content: center; padding: 48px 0; }
-    .error-card { background: #fef2f2; color: #ef4444; padding: 24px; border-radius: 12px; text-align: center; }
-    .detail-grid { display: grid; grid-template-columns: 1fr 360px; gap: 24px; }
-    .detail-card { background: #fff; border-radius: 12px; padding: 32px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .detail-card.sidebar { padding: 24px; }
-    .detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .detail-title { font-size: 1.5rem; font-weight: 700; }
-    .maturity-banner { display: flex; gap: 8px; padding: 12px 16px; border-radius: 8px; background: #fffbeb; border: 1px solid #fde68a; color: #92400e; font-size: 0.875rem; margin-bottom: 24px; }
-    .maturity-banner.frozen { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
-    .coupon-warning { display: flex; flex-direction: column; gap: 4px; padding: 12px 16px; border-radius: 8px; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; font-size: 0.875rem; margin-bottom: 24px; }
-    .coupon-reason { font-size: 0.8125rem; }
-    .detail-body { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .detail-field { display: flex; flex-direction: column; }
-    .field-label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .field-value { font-size: 0.9375rem; color: #1a1a2e; }
-    .field-value.mono { font-family: monospace; font-size: 0.8125rem; word-break: break-all; }
-    .section-title { font-size: 1rem; font-weight: 600; margin-bottom: 12px; }
-    .coupon-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
-    .coupon-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-    .coupon-item { display: flex; justify-content: space-between; padding: 8px 12px; background: #f9fafb; border-radius: 6px; font-size: 0.8125rem; }
-    .coupon-index { color: #6b7280; }
-    .coupon-date { font-weight: 500; }
-    .progress-bar { height: 8px; background: #e5e7eb; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
-    .progress-fill { height: 100%; background: #22c55e; border-radius: 4px; transition: width 0.3s; }
-    .progress-text { font-size: 0.8125rem; color: #6b7280; margin-bottom: 20px; }
-    .subscribe-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
-    .subscribe-form { display: flex; flex-direction: column; gap: 12px; }
-    .form-label { font-size: 0.8125rem; font-weight: 600; color: #1a1a2e; }
-    .form-input { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; outline: none; }
-    .form-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
-    .status-notice { font-size: 0.8125rem; color: #6b7280; padding: 8px 0; }
-    .auth-hint { font-size: 0.75rem; color: #92400e; background: #fffbeb; padding: 6px 10px; border-radius: 6px; margin: 0; }
-    .btn { padding: 10px 20px; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; text-decoration: none; display: inline-block; text-align: center; }
-    .btn-primary { background: #1a1a2e; color: #fff; }
-    .btn-primary:hover:not(:disabled) { background: #2a2a4e; }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-outline { background: #fff; color: #1a1a2e; border: 1px solid #d1d5db; width: 100%; }
-    .btn-outline:hover { background: #f0f2f5; }
-    .subscribe-btn { width: 100%; }
-    .success-msg { font-size: 0.8125rem; color: #22c55e; word-break: break-all; padding: 8px; background: #f0fdf4; border-radius: 6px; }
-    .error-msg { font-size: 0.8125rem; color: #ef4444; padding: 8px; background: #fef2f2; border-radius: 6px; }
-    .marketplace-link { margin-top: 20px; }
-    .claim-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
-    .claim-btn, .transfer-btn, .sweep-btn { width: 100%; }
-    .claimable-total { font-size: 0.875rem; font-weight: 600; color: #1a1a2e; margin-bottom: 8px; }
-    .claimable-detail-title { font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; margin: 8px 0 4px; }
-    .claimable-list { list-style: none; padding: 0; margin: 0 0 12px; display: flex; flex-direction: column; gap: 6px; }
-    .claimable-item { display: flex; flex-direction: column; gap: 2px; font-size: 0.8125rem; padding: 6px 10px; background: #f9fafb; border-radius: 6px; }
-    .claimable-period { font-weight: 600; color: #1a1a2e; }
-    .claimable-amount { font-family: monospace; color: #16a34a; }
-    .claimable-meta { color: #6b7280; font-size: 0.75rem; }
-    .transfer-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
-    .admin-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
-    .admin-note { font-size: 0.8125rem; color: #6b7280; padding: 8px 0; }
-    .lock-btn { margin-top: 8px; }
-    .undistributed-total { display: flex; flex-direction: column; margin-bottom: 12px; }
-    .refresh-banner { padding: 10px 16px; border-radius: 8px; background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; font-size: 0.8125rem; margin-bottom: 16px; }
-    .refresh-btn { width: 100%; margin-top: 16px; }
-    .holders-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
-    .holders-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-    .holder-item { display: flex; justify-content: space-between; gap: 8px; font-size: 0.8125rem; padding: 6px 10px; background: #f9fafb; border-radius: 6px; }
-    .holder-balance { font-family: monospace; }
-    .muted { font-size: 0.8125rem; color: #6b7280; }
+    .detail-page {
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .page-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .back-link {
+      font-size: 13px;
+      color: var(--color-ash);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .back-link:hover {
+      color: var(--color-chalk);
+    }
+    .refresh-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--color-signal-mint);
+    }
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: 24px;
+    }
+    .detail-card {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .detail-card.sidebar {
+      padding: 24px;
+    }
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .header-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--color-ash);
+    }
+    .detail-title {
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--color-chalk);
+      margin-top: 4px;
+    }
+    .maturity-banner {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      background: var(--color-abyss);
+      border: 1px solid var(--color-graphite);
+      font-size: 13px;
+      color: var(--color-chalk);
+    }
+    .maturity-banner.frozen {
+      background: var(--color-danger-dim);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: var(--color-danger);
+    }
+    .mat-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--color-ash);
+    }
+    .mat-time {
+      font-weight: 600;
+      color: var(--color-signal-mint);
+    }
+    .mat-date {
+      color: var(--color-ash);
+      font-size: 12px;
+    }
+    .coupon-warning {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      background: var(--color-danger-dim);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: var(--color-danger);
+      font-size: 13px;
+    }
+    .detail-body {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    .detail-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .field-label {
+      font-size: 11px;
+      color: var(--color-ash);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .field-value {
+      font-size: 16px;
+      color: var(--color-chalk);
+      font-weight: 500;
+    }
+    .field-value.mint {
+      color: var(--color-signal-mint);
+    }
+    .coupon-section {
+      border-top: 1px solid var(--color-graphite);
+      padding-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .section-title-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-chalk);
+    }
+    .coupon-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .coupon-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--color-abyss);
+      border: 1px solid var(--color-graphite);
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .coupon-index {
+      color: var(--color-ash);
+    }
+    .coupon-date {
+      color: var(--color-chalk);
+    }
+    .progress-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .progress-bar {
+      height: 6px;
+      background: var(--color-graphite);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--color-signal-mint);
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+    .progress-text {
+      font-size: 12px;
+      color: var(--color-ash);
+    }
+    .sidebar-block {
+      border-top: 1px solid var(--color-graphite);
+      padding-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .full-width {
+      width: 100%;
+    }
+    .subscribe-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--color-ash);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .form-input {
+      padding: 10px 14px;
+      background: var(--color-abyss);
+      border: 1px solid var(--color-graphite);
+      border-radius: 8px;
+      color: var(--color-chalk);
+      font-size: 14px;
+      outline: none;
+    }
+    .form-input:focus {
+      border-color: var(--color-signal-mint);
+    }
+    .status-notice {
+      font-size: 13px;
+      color: var(--color-ash);
+    }
+    .auth-hint {
+      font-size: 12px;
+      color: var(--color-warning);
+    }
+    .success-msg {
+      font-size: 12px;
+      color: var(--color-signal-mint);
+      word-break: break-all;
+      padding: 8px 12px;
+      background: var(--color-signal-mint-dim);
+      border-radius: 6px;
+      border: 1px solid rgba(63, 226, 128, 0.2);
+    }
+    .error-msg {
+      font-size: 12px;
+      color: var(--color-danger);
+      padding: 8px 12px;
+      background: var(--color-danger-dim);
+      border-radius: 6px;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    .holders-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .holder-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      padding: 8px 12px;
+      background: var(--color-abyss);
+      border: 1px solid var(--color-graphite);
+      border-radius: 6px;
+      color: var(--color-chalk);
+    }
+    .claimable-total {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-chalk);
+    }
+    .claimable-detail-title {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--color-ash);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 4px;
+    }
+    .claimable-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .claimable-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+      padding: 8px 12px;
+      background: var(--color-abyss);
+      border: 1px solid var(--color-graphite);
+      border-radius: 6px;
+    }
+    .claimable-header {
+      display: flex;
+      justify-content: space-between;
+    }
+    .claimable-period {
+      font-weight: 500;
+      color: var(--color-chalk);
+    }
+    .claimable-amount {
+      color: var(--color-signal-mint);
+    }
+    .claimable-meta {
+      font-size: 11px;
+      color: var(--color-ash);
+    }
+    .admin-block {
+      background: var(--color-abyss);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .security-tag {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--color-ash);
+    }
+    .undistributed-total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .loading-section {
+      display: flex;
+      justify-content: center;
+      padding: 64px 0;
+    }
+    .error-card {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      color: var(--color-danger);
+      padding: 32px;
+      border-radius: var(--radius-cards);
+      text-align: center;
+    }
+    .muted {
+      font-size: 13px;
+      color: var(--color-ash);
+    }
+    @media (max-width: 900px) {
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+      .detail-body {
+        grid-template-columns: 1fr;
+      }
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -459,11 +719,6 @@ export class BondDetailComponent implements OnInit, OnDestroy {
   private readonly pendingTx = inject(PendingTransactionsService);
   private readonly coordinator = inject(BondDetailReloadCoordinator);
 
-  /**
-   * Every panel (summary, holders, coupon, maturity) is derived from the single
-   * snapshot the coordinator commits after each `reload()`, so the view can never
-   * show a mix of pre- and post-mutation data. See issue #4.
-   */
   readonly bond = computed<Bond | null>(() => this.coordinator.detail()?.bond ?? null);
   readonly holders = computed(() => this.coordinator.detail()?.holders ?? []);
   readonly undistributed = computed<number | null>(() => {
@@ -504,16 +759,11 @@ export class BondDetailComponent implements OnInit, OnDestroy {
   readonly reconcileSubmitting = signal(false);
   readonly secretPromptOpen = signal(false);
 
-  /**
-   * Admin detection now goes through `AdminAccessService`, which validates the
-   * configured address instead of comparing against the old 'G...' placeholder
-   * (issue #167).
-   */
   readonly isAdmin = this.adminAccess.isAdmin;
 
   readonly maturityReached = computed(() => {
     const b = this.bond();
-    return !!b && (b.maturityStatus === 'Matured' || b.maturityDate * 1000 <= this.now());
+    return !b || (b.maturityStatus === 'Matured' || b.maturityDate * 1000 <= this.now());
   });
 
   readonly countdown = computed(() => {
@@ -524,11 +774,6 @@ export class BondDetailComponent implements OnInit, OnDestroy {
 
   private maturityTimer?: ReturnType<typeof setInterval>;
 
-  /**
-   * Load coupon eligibility whenever the committed bond snapshot changes. The
-   * projectId is only known after the detail loads, so we react to the snapshot
-   * rather than firing it inline in `reload()`.
-   */
   private readonly couponEligibilityEffect = effect(() => {
     const projectId = this.coordinator.detail()?.bond.projectId;
     if (!projectId) {
@@ -541,11 +786,6 @@ export class BondDetailComponent implements OnInit, OnDestroy {
     });
   }, { allowSignalWrites: true });
 
-  /**
-   * Load itemized claimable-credit provenance whenever the committed bond
-   * snapshot or the connected wallet changes (#156). Amounts are rendered in
-   * minor units via `formatCreditMinorUnits` (#157).
-   */
   private readonly claimableEffect = effect(() => {
     const bond = this.coordinator.detail()?.bond;
     const address = this.walletService.address();
@@ -570,10 +810,10 @@ export class BondDetailComponent implements OnInit, OnDestroy {
   transferTo = '';
   transferAmount = 0;
 
-  /** Format a minor-unit credit quantity for display (#157). */
   fmtCredits(minorUnits: string | number | bigint, maxDecimals?: number): string {
     return formatCreditMinorUnits(minorUnits, maxDecimals);
   }
+
   subscribeProgress(): number {
     const b = this.bond();
     if (!b || Number(b.totalSupply) === 0) return 0;
@@ -607,12 +847,10 @@ export class BondDetailComponent implements OnInit, OnDestroy {
     this.reload(id);
   }
 
-  /** Atomically refresh every panel of this bond (issue #4 refresh model). */
   reload(id: number): void {
     this.coordinator.reload(id);
   }
 
-  /** Manual refresh triggered by the UI button. */
   onRefresh(): void {
     const b = this.bond();
     if (b) this.reload(b.id);
@@ -703,8 +941,6 @@ export class BondDetailComponent implements OnInit, OnDestroy {
     );
     if (!confirmed) return;
 
-    // The sweep route is behind the API's IntentGuard: without a signed intent
-    // it is a guaranteed 401, so collect the secret first (#166).
     if (!this.adminIntent.hasSecret()) {
       this.sweepError.set('');
       this.secretPromptOpen.set(true);
@@ -714,13 +950,12 @@ export class BondDetailComponent implements OnInit, OnDestroy {
     this.submitSweep();
   }
 
-  /** The admin unlocked the session from the prompt: continue the sweep. */
   onSecretUnlocked(): void {
     this.secretPromptOpen.set(false);
     this.submitSweep();
   }
 
-private submitSweep(): void {
+  private submitSweep(): void {
     const b = this.bond();
     if (!b) return;
 
@@ -754,7 +989,7 @@ private submitSweep(): void {
     if (!confirmed) return;
 
     this.apiService.distributeCoupon(b.id, { periodIndex: 0 }).subscribe({
-      next: (res) => {
+      next: () => {
         this.reload(b.id);
       },
       error: (err) => {
@@ -802,7 +1037,7 @@ private submitSweep(): void {
 
     this.reconcileSubmitting.set(true);
     this.apiService.reconcileHolders(b.id).subscribe({
-      next: (res) => {
+      next: () => {
         this.reload(b.id);
       },
       error: (err) => {
@@ -812,4 +1047,3 @@ private submitSweep(): void {
     });
   }
 }
-

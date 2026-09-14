@@ -18,9 +18,6 @@ import { PendingTransactionsService } from '../../shared/services/pending-transa
 export const ORDERS_RETRY_COUNT = 3;
 export const ORDERS_RETRY_BASE_DELAY_MS = 500;
 export const ORDERS_RETRY_MAX_DELAY_MS = 4000;
-// Reconciliation (#91): background polling interval for the open-orders list,
-// so an order filled/cancelled/expired elsewhere is reflected here without
-// requiring a manual refresh.
 export const ORDERS_POLL_INTERVAL_MS = 15000;
 
 @Component({
@@ -30,9 +27,12 @@ export const ORDERS_POLL_INTERVAL_MS = 15000;
   template: `
     <div class="marketplace-page">
       <div class="page-header">
-        <h1 class="page-title">Marketplace</h1>
+        <div>
+          <span class="header-tag">SECONDARY DECENTRALIZED ORDERBOOK</span>
+          <h1 class="page-title">Token DEX Marketplace</h1>
+        </div>
         <a class="btn btn-primary" [routerLink]="['/marketplace/sell']" [queryParams]="{ bondId: filterBondId() }">
-          List Tokens for Sale
+          + List Tokens for Sale
         </a>
       </div>
 
@@ -48,19 +48,19 @@ export const ORDERS_POLL_INTERVAL_MS = 15000;
         </div>
       }
 
-      <div class="filters">
-        <label class="filter-label">
-          Bond Filter
-          <select class="filter-select" [ngModel]="filterBondId()" (ngModelChange)="onFilterChange($event)">
+      <div class="filters-bar">
+        <div class="filter-group">
+          <label class="filter-label" for="bondFilter">Filter Bond</label>
+          <select id="bondFilter" class="filter-select" [ngModel]="filterBondId()" (ngModelChange)="onFilterChange($event)">
             <option [ngValue]="null">All Bonds</option>
             @for (bond of bonds(); track bond.id) {
-              <option [ngValue]="bond.id">Bond #{{ bond.id }}</option>
+              <option [ngValue]="bond.id">Bond #{{ bond.id }} ({{ bond.creditType }})</option>
             }
           </select>
-        </label>
-        <label class="filter-label">
-          Status Filter
-          <select class="filter-select" [ngModel]="filterStatus()" (ngModelChange)="onStatusFilterChange($event)">
+        </div>
+        <div class="filter-group">
+          <label class="filter-label" for="statusFilter">Filter Status</label>
+          <select id="statusFilter" class="filter-select" [ngModel]="filterStatus()" (ngModelChange)="onStatusFilterChange($event)">
             <option value="All">All Statuses</option>
             <option value="Open">Open</option>
             <option value="PartiallyFilled">Partially Filled</option>
@@ -68,7 +68,7 @@ export const ORDERS_POLL_INTERVAL_MS = 15000;
             <option value="Cancelled">Cancelled</option>
             <option value="Expired">Expired</option>
           </select>
-        </label>
+        </div>
       </div>
 
       @if (loading()) {
@@ -76,13 +76,18 @@ export const ORDERS_POLL_INTERVAL_MS = 15000;
       } @else {
         @if (priceKeys().length > 0) {
           <div class="price-overview">
-            <h3 class="section-title">Price Overview</h3>
+            <div class="section-title-group">
+              <h3 class="section-title">Market Order Summary</h3>
+              <span class="pill-tag">{{ priceKeys().length }} Assets</span>
+            </div>
             <div class="price-grid">
               @for (bondId of priceKeys(); track bondId) {
                 <div class="price-card">
-                  <span class="price-bond">Bond #{{ bondId }}</span>
-                  <span class="price-best">Best: {{ bestPrices()[bondId].best }}</span>
-                  <span class="price-avg">Avg: {{ bestPrices()[bondId].average | number:'1.1-1' }} USDC</span>
+                  <div class="price-card-header">
+                    <span class="price-bond mono">Bond #{{ bondId }}</span>
+                    <span class="price-best mono mint">{{ bestPrices()[bondId].best }} USDC</span>
+                  </div>
+                  <span class="price-avg mono">Avg: {{ bestPrices()[bondId].average | number:'1.1-2' }} USDC</span>
                 </div>
               }
             </div>
@@ -91,24 +96,27 @@ export const ORDERS_POLL_INTERVAL_MS = 15000;
 
         <div class="orders-section">
           <div class="section-header">
-            <h3 class="section-title">Open Orders ({{ orders().length }})</h3>
-            <button class="btn btn-sm btn-outline" (click)="refreshOrders()">Refresh</button>
+            <div>
+              <span class="section-tag">LIVE LIQUIDITY POOL</span>
+              <h3 class="section-title">Open Orders ({{ orders().length }})</h3>
+            </div>
+            <button class="btn btn-sm btn-outline" (click)="refreshOrders()">Refresh Feed</button>
           </div>
 
           @if (orders().length === 0) {
             <div class="empty-section">
-              <p>No active orders. List your bond tokens for sale.</p>
+              <p>No active sell orders found. List your bond tokens for sale.</p>
             </div>
           } @else {
-            <div class="orders-table-wrapper">
-              <table class="orders-table">
+            <div class="table-container">
+              <table class="data-table">
                 <thead>
                   <tr>
-                    <th>ID</th>
+                    <th>Order</th>
                     <th>Bond</th>
                     <th>Seller</th>
-                    <th>Amount</th>
-                    <th>Price</th>
+                    <th>Units</th>
+                    <th>Price / Unit</th>
                     <th>Asset</th>
                     <th>Status</th>
                     <th>Created</th>
@@ -118,55 +126,55 @@ export const ORDERS_POLL_INTERVAL_MS = 15000;
                 <tbody>
                   @for (order of filteredOrders(); track order.id) {
                     <tr>
-                      <td>{{ order.id }}</td>
-                      <td>{{ order.bondId }}</td>
-                      <td class="mono">{{ order.seller.slice(0, 8) }}...</td>
-                      <td>{{ order.amount }}</td>
-                      <td>{{ order.pricePerToken }}</td>
+                      <td class="mono">#{{ order.id }}</td>
+                      <td class="mono">#{{ order.bondId }}</td>
+                      <td class="mono">{{ order.seller.slice(0, 6) }}...{{ order.seller.slice(-4) }}</td>
+                      <td class="mono">{{ order.amount }}</td>
+                      <td class="mono mint">{{ order.pricePerToken }}</td>
                       <td>{{ order.quoteAsset }}</td>
                       <td><app-status-badge [status]="order.status" variant="bond" /></td>
-                      <td>{{ order.createdAt | date }}</td>
+                      <td class="mono">{{ order.createdAt | date:'shortDate' }}</td>
                       <td>
-                          @if (order.status === 'Open' || order.status === 'PartiallyFilled') {
-                            @if (buyOrderId() === order.id) {
-                              <div class="buy-form">
-                                <input type="number" class="buy-input" placeholder="Amount" [(ngModel)]="buyAmount" min="1" />
-                                <input type="number" class="buy-input" placeholder="Max price" [(ngModel)]="buyMaxPrice" min="0.01" />
-                                <div class="quote-summary">
-                                  Current quote: {{ order.pricePerToken }} {{ order.quoteAsset }} / token ·
-                                  max slippage: {{ maxSlippagePercent(order) | number:'1.0-2' }}%
-                                </div>
-                                @if (buyRequirement(order); as req) {
-                                  <div class="buy-requirement">
-                                    @if (req.sufficient) {
-                                      <span class="sufficient-msg">
-                                        Escrow sufficient: {{ req.required }} {{ order.quoteAsset }} needed, {{ req.available }} available.
-                                      </span>
-                                    } @else {
-                                      <span class="insufficient-msg">
-                                        Insufficient escrow: need {{ req.required }} {{ order.quoteAsset }}, have {{ req.available }}.
-                                      </span>
-                                      <button class="btn btn-sm btn-outline" (click)="focusQuotePanel()">
-                                        Deposit {{ req.shortfall }} {{ order.quoteAsset }} to buy
-                                      </button>
-                                    }
-                                  </div>
-                                }
-                                <div class="buy-actions">
-                                  <button class="btn btn-sm btn-primary" (click)="onBuy(order)" [disabled]="actionPending() || !canConfirm(order)">Confirm</button>
-                                  <button class="btn btn-sm btn-outline" (click)="cancelBuy()">Cancel</button>
-                                </div>
-                                @if (!authService.sessionReady()) {
-                                  <span class="auth-hint">Connect your wallet and sign in to buy.</span>
-                                }
-                                @if (buyError()) {
-                                  <div class="error-msg">{{ buyError() }}</div>
-                                }
+                        @if (order.status === 'Open' || order.status === 'PartiallyFilled') {
+                          @if (buyOrderId() === order.id) {
+                            <div class="buy-form">
+                              <input type="number" class="buy-input" placeholder="Amount" [(ngModel)]="buyAmount" min="1" />
+                              <input type="number" class="buy-input" placeholder="Max price" [(ngModel)]="buyMaxPrice" min="0.01" />
+                              <div class="quote-summary mono">
+                                Quote: {{ order.pricePerToken }} {{ order.quoteAsset }} &bull;
+                                Slip: {{ maxSlippagePercent(order) | number:'1.0-2' }}%
                               </div>
-                            } @else {
-                              <button class="btn btn-sm btn-primary" (click)="openBuy(order)">Buy</button>
-                            }
+                              @if (buyRequirement(order); as req) {
+                                <div class="buy-requirement">
+                                  @if (req.sufficient) {
+                                    <span class="sufficient-msg mono">
+                                      Escrow OK: {{ req.required }} {{ order.quoteAsset }} needed.
+                                    </span>
+                                  } @else {
+                                    <span class="insufficient-msg mono">
+                                      Insufficient: Need {{ req.required }} {{ order.quoteAsset }} (have {{ req.available }}).
+                                    </span>
+                                    <button class="btn btn-sm btn-outline" (click)="focusQuotePanel()">
+                                      Deposit {{ req.shortfall }} {{ order.quoteAsset }}
+                                    </button>
+                                  }
+                                </div>
+                              }
+                              <div class="buy-actions">
+                                <button class="btn btn-sm btn-primary" (click)="onBuy(order)" [disabled]="actionPending() || !canConfirm(order)">Confirm</button>
+                                <button class="btn btn-sm btn-outline" (click)="cancelBuy()">Cancel</button>
+                              </div>
+                              @if (!authService.sessionReady()) {
+                                <span class="auth-hint">Connect wallet to buy.</span>
+                              }
+                              @if (buyError()) {
+                                <div class="error-msg">{{ buyError() }}</div>
+                              }
+                            </div>
+                          } @else {
+                            <button class="btn btn-sm btn-primary" (click)="openBuy(order)">Buy</button>
                           }
+                        }
                       </td>
                     </tr>
                   }
@@ -178,17 +186,22 @@ export const ORDERS_POLL_INTERVAL_MS = 15000;
 
         @if (walletService.isConnected() && myOrders().length > 0) {
           <div class="orders-section my-orders">
-            <h3 class="section-title">My Orders</h3>
+            <div class="section-header">
+              <div>
+                <span class="section-tag">WALLET SCOPED</span>
+                <h3 class="section-title">My Active Orders</h3>
+              </div>
+            </div>
             @if (cancelError()) {
               <div class="error-banner">{{ cancelError() }}</div>
             }
-            <div class="orders-table-wrapper">
-              <table class="orders-table">
+            <div class="table-container">
+              <table class="data-table">
                 <thead>
                   <tr>
-                    <th>ID</th>
+                    <th>Order</th>
                     <th>Bond</th>
-                    <th>Amount</th>
+                    <th>Units</th>
                     <th>Price</th>
                     <th>Status</th>
                     <th>Created</th>
@@ -198,12 +211,12 @@ export const ORDERS_POLL_INTERVAL_MS = 15000;
                 <tbody>
                   @for (order of myOrders(); track order.id) {
                     <tr>
-                      <td>{{ order.id }}</td>
-                      <td>{{ order.bondId }}</td>
-                      <td>{{ order.amount }}</td>
-                      <td>{{ order.pricePerToken }}</td>
+                      <td class="mono">#{{ order.id }}</td>
+                      <td class="mono">#{{ order.bondId }}</td>
+                      <td class="mono">{{ order.amount }}</td>
+                      <td class="mono mint">{{ order.pricePerToken }}</td>
                       <td><app-status-badge [status]="order.status" variant="bond" /></td>
-                      <td>{{ order.createdAt | date }}</td>
+                      <td class="mono">{{ order.createdAt | date:'shortDate' }}</td>
                       <td>
                         @if (order.status === 'Open' || order.status === 'PartiallyFilled') {
                           <button
@@ -211,10 +224,10 @@ export const ORDERS_POLL_INTERVAL_MS = 15000;
                             [disabled]="actionPending()"
                             (click)="onCancel(order)"
                           >
-                            {{ cancellingOrderId() === order.id ? 'Cancelling…' : 'Cancel' }}
+                            {{ cancellingOrderId() === order.id ? 'Cancelling...' : 'Cancel Order' }}
                           </button>
                         } @else {
-                          —
+                          <span class="mono text-ash">&mdash;</span>
                         }
                       </td>
                     </tr>
@@ -228,50 +241,210 @@ export const ORDERS_POLL_INTERVAL_MS = 15000;
     </div>
   `,
   styles: [`
-    .marketplace-page { max-width: 1200px; }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .page-title { font-size: 1.5rem; font-weight: 700; }
-    .error-banner { background: #fef2f2; color: #ef4444; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.875rem; }
-    .quote-section { margin-bottom: 24px; }
-    .filters { margin-bottom: 20px; }
-    .filter-label { font-size: 0.8125rem; font-weight: 600; color: #1a1a2e; display: flex; align-items: center; gap: 8px; }
-    .filter-select { padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; outline: none; background: #fff; }
-    .filter-select:focus { border-color: #3b82f6; }
-    .section-title { font-size: 1rem; font-weight: 600; margin-bottom: 12px; }
-    .price-overview { margin-bottom: 24px; }
-    .price-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-    .price-card { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: flex; flex-direction: column; gap: 4px; }
-    .price-bond { font-weight: 600; font-size: 0.875rem; }
-    .price-best { font-size: 0.8125rem; color: #22c55e; }
-    .price-avg { font-size: 0.75rem; color: #6b7280; }
-    .loading-section { display: flex; justify-content: center; padding: 48px 0; }
-    .empty-section { text-align: center; padding: 48px 0; color: #6b7280; }
-    .orders-section { margin-bottom: 32px; }
-    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .my-orders { margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e7eb; }
-    .orders-table-wrapper { overflow-x: auto; background: #fff; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .orders-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-    .orders-table th { text-align: left; padding: 12px 16px; font-weight: 600; color: #6b7280; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e5e7eb; background: #f9fafb; }
-    .orders-table td { padding: 12px 16px; border-bottom: 1px solid #f0f2f5; }
-    .orders-table tr:last-child td { border-bottom: none; }
-    .mono { font-family: monospace; font-size: 0.8125rem; }
-    .btn { padding: 8px 16px; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; text-decoration: none; display: inline-block; }
-    .btn-sm { padding: 6px 12px; font-size: 0.8125rem; }
-    .btn-primary { background: #1a1a2e; color: #fff; }
-    .btn-primary:hover:not(:disabled) { background: #2a2a4e; }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-outline { background: #fff; color: #1a1a2e; border: 1px solid #d1d5db; }
-    .btn-outline:hover { background: #f0f2f5; }
-    .buy-form { display: flex; flex-direction: column; gap: 6px; min-width: 180px; }
-    .buy-input { padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.8125rem; outline: none; width: 100%; }
-    .buy-input:focus { border-color: #3b82f6; }
-    .buy-actions { display: flex; gap: 4px; }
-    .quote-summary { color: #4b5563; font-size: 0.75rem; }
-    .buy-requirement { display: flex; flex-direction: column; gap: 6px; font-size: 0.75rem; padding: 8px; border-radius: 6px; }
-    .sufficient-msg { color: #22c55e; }
-    .insufficient-msg { color: #ef4444; }
-    .error-msg { font-size: 0.75rem; color: #ef4444; }
-    .auth-hint { font-size: 0.75rem; color: #92400e; background: #fffbeb; padding: 4px 8px; border-radius: 6px; }
+    .marketplace-page {
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 4px;
+    }
+    .header-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--color-ash);
+    }
+    .page-title {
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--color-chalk);
+      margin-top: 4px;
+    }
+    .error-banner {
+      background: var(--color-danger-dim);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: var(--color-danger);
+      padding: 12px 16px;
+      border-radius: var(--radius-cards);
+      font-size: 14px;
+    }
+    .quote-section {
+      width: 100%;
+    }
+    .filters-bar {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .filter-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--color-ash);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .filter-select {
+      padding: 8px 14px;
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: 8px;
+      color: var(--color-chalk);
+      font-size: 13px;
+      outline: none;
+    }
+    .filter-select:focus {
+      border-color: var(--color-signal-mint);
+    }
+    .section-title-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .section-tag {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--color-ash);
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--color-chalk);
+    }
+    .price-overview {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .price-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .price-card {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .price-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .price-bond {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-chalk);
+    }
+    .price-best {
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .price-avg {
+      font-size: 11px;
+      color: var(--color-ash);
+    }
+    .loading-section {
+      display: flex;
+      justify-content: center;
+      padding: 64px 0;
+    }
+    .empty-section {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      text-align: center;
+      padding: 48px 0;
+      color: var(--color-ash);
+      font-size: 14px;
+    }
+    .orders-section {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .my-orders {
+      border-top: 1px solid var(--color-graphite);
+      padding-top: 24px;
+    }
+    .buy-form {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 200px;
+      background: var(--color-abyss);
+      border: 1px solid var(--color-graphite);
+      border-radius: 8px;
+      padding: 10px;
+    }
+    .buy-input {
+      padding: 6px 10px;
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--color-chalk);
+      outline: none;
+    }
+    .buy-input:focus {
+      border-color: var(--color-signal-mint);
+    }
+    .buy-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .quote-summary {
+      color: var(--color-ash);
+      font-size: 11px;
+    }
+    .buy-requirement {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 11px;
+    }
+    .sufficient-msg {
+      color: var(--color-signal-mint);
+    }
+    .insufficient-msg {
+      color: var(--color-danger);
+    }
+    .error-msg {
+      font-size: 11px;
+      color: var(--color-danger);
+    }
+    .auth-hint {
+      font-size: 11px;
+      color: var(--color-warning);
+    }
+    @media (max-width: 768px) {
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -299,13 +472,6 @@ export class MarketplaceListComponent implements OnInit, OnDestroy {
   readonly cancellingOrderId = signal<number | null>(null);
   readonly cancelError = signal('');
 
-  /**
-   * Reconciliation (#91): a single wallet address shares one sequential
-   * nonce per contract (see `NonceService.next`), so a buy and a cancel from
-   * the same connected wallet cannot safely be submitted concurrently.
-   * `actionPending` gates every action button (Confirm, Cancel) so at most
-   * one nonce-consuming marketplace action is in flight at a time.
-   */
   readonly actionPending = computed(() => this.buySubmitting() || this.cancellingOrderId() !== null);
 
   private readonly ordersRefresh$ = new Subject<{ forceRefresh: boolean; background: boolean }>();
@@ -373,11 +539,6 @@ export class MarketplaceListComponent implements OnInit, OnDestroy {
     this.loadBonds();
     this.loadOrders();
 
-    // Reconciliation (#91): periodic background refresh so a stale open
-    // order (filled/cancelled/expired elsewhere) is caught without the user
-    // having to click Refresh. Funnelled through the same ordersRefresh$
-    // pipeline as manual refreshes, so switchMap still guarantees only one
-    // in-flight request at a time.
     timer(ORDERS_POLL_INTERVAL_MS, ORDERS_POLL_INTERVAL_MS)
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.loadOrders(false, true));
@@ -403,13 +564,8 @@ export class MarketplaceListComponent implements OnInit, OnDestroy {
   }
 
   private fetchOrders(forceRefresh: boolean, background = false): Observable<PaginatedResponse<Order>> {
-    // Background polling ticks (#91) skip the loading spinner so the list
-    // doesn't flicker every poll interval; manual refreshes and the initial
-    // load still show it.
     if (!background) this.loading.set(true);
     this.error.set('');
-    // defer re-invokes the API call on every (re)subscription, so retries issue a
-    // fresh request with a fresh cache-busting param instead of reusing a stale one.
     return defer(() => this.apiService.getOrders({ bondId: this.filterBondId() ?? undefined, status: this.filterStatus() === 'All' ? undefined : (this.filterStatus() as Order['status']) }, forceRefresh)).pipe(
       retry({
         count: ORDERS_RETRY_COUNT,
@@ -545,13 +701,6 @@ export class MarketplaceListComponent implements OnInit, OnDestroy {
         this.loadOrders(true);
       },
       error: (err) => {
-        // Reconciliation (#91): the backend now revalidates the order
-        // immediately before buying and rejects a no-longer-open order with
-        // 409 Conflict. Always refresh so the row's true status replaces
-        // whatever was shown when the user opened this form, and close the
-        // form for a 409 specifically since that order is confirmed dead --
-        // for other errors (e.g. insufficient funds) leave it open so the
-        // user can act (e.g. deposit more) without losing their inputs.
         this.buyError.set(appErrorMessage(err, 'Buy failed'));
         this.buySubmitting.set(false);
         if (normalizeApiError(err).status === 409) {
@@ -573,8 +722,6 @@ export class MarketplaceListComponent implements OnInit, OnDestroy {
         this.loadOrders(true);
       },
       error: (err) => {
-        // A cancel rejection (e.g. the order was just filled) is itself a
-        // stale-state signal, so always refresh (#91) to show the real status.
         this.cancelError.set(appErrorMessage(err, 'Cancel failed'));
         this.cancellingOrderId.set(null);
         this.loadOrders(true);

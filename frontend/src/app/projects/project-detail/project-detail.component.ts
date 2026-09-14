@@ -15,22 +15,25 @@ import { AdminAccessService } from '../../shared/services/admin-access.service';
   imports: [CommonModule, RouterModule, StatusBadgeComponent, LoadingSpinnerComponent, ChallengedReportsComponent],
   template: `
     <div class="detail-page">
-      <a class="back-link" routerLink="/projects">← Back to Projects</a>
+      <a class="back-link" routerLink="/projects">&larr; Back to Projects</a>
 
       @if (project(); as p) {
         <div class="detail-card">
           <div class="detail-header">
-            <h1 class="detail-title">{{ p.name }}</h1>
+            <div>
+              <span class="header-tag">PROJECT SPECIFICATION</span>
+              <h1 class="detail-title">{{ p.name }}</h1>
+            </div>
             <app-status-badge [status]="p.status" variant="project" />
           </div>
 
           <div class="detail-body">
             <div class="detail-field">
               <span class="field-label">Project ID</span>
-              <span class="field-value">{{ p.id }}</span>
+              <span class="field-value mono">{{ p.id }}</span>
             </div>
             <div class="detail-field">
-              <span class="field-label">Methodology</span>
+              <span class="field-label">Methodology Standard</span>
               <span class="field-value mono">{{ p.methodology }}</span>
             </div>
             <div class="detail-field">
@@ -43,53 +46,61 @@ import { AdminAccessService } from '../../shared/services/admin-access.service';
             </div>
             <div class="detail-field">
               <span class="field-label">Carbon Estimate</span>
-              <span class="field-value">{{ p.carbonSequestrationEstimate | number }} tCO₂e</span>
+              <span class="field-value mint">{{ p.carbonSequestrationEstimate | number }} tCO₂e</span>
             </div>
             <div class="detail-field">
               <span class="field-label">Owner Address</span>
               <span class="field-value mono">{{ p.ownerAddress }}</span>
             </div>
             <div class="detail-field">
-              <span class="field-label">Created</span>
+              <span class="field-label">Registered Date</span>
               <span class="field-value">{{ p.createdAt | date }}</span>
             </div>
             <div class="detail-field">
-              <span class="field-label">Metadata</span>
-              <a class="field-value link" [href]="metadataUrl()" target="_blank" rel="noopener noreferrer">View on IPFS →</a>
+              <span class="field-label">IPFS Metadata</span>
+              <a class="field-value link" [href]="metadataUrl()" target="_blank" rel="noopener noreferrer">Inspect on IPFS &rarr;</a>
             </div>
           </div>
+
+          @if (adminAccess.isAdmin()) {
+            <div class="admin-approval-bar">
+              <span class="security-tag">ADMIN VERIFICATION ACTION</span>
+              @if (project()?.status === 'Pending') {
+                <div class="admin-buttons">
+                  <button class="btn btn-primary btn-sm" (click)="onApprove()">Approve Project</button>
+                  <button class="btn btn-outline btn-sm" (click)="onReject()">Reject Project</button>
+                </div>
+              } @else {
+                <span class="status-notice">Project is verified as {{ project()?.status }}.</span>
+              }
+            </div>
+          }
         </div>
 
         <section class="timeline-card" aria-labelledby="provenance-heading">
-          <h2 id="provenance-heading">Provenance</h2>
+          <div class="timeline-header">
+            <h2 id="provenance-heading" class="timeline-title">Provenance Timeline</h2>
+            <span class="pill-tag">{{ timeline().length }} Events</span>
+          </div>
           @if (timeline().length === 0) {
-            <p class="timeline-empty">No provenance events are available yet.</p>
+            <p class="timeline-empty">No provenance events recorded on-chain yet.</p>
           } @else {
             <ol class="timeline">
               @for (event of timeline(); track $index) {
                 <li>
                   <span class="timeline-dot" [class.pending]="event.status !== 'complete'"></span>
-                  <div><strong>{{ event.title }}</strong>
-                    <div class="timeline-meta">{{ event.occurredAt ? (event.occurredAt | date:'medium') : event.status }}</div>
-                    @if (event.evidenceUrl) { <a [href]="event.evidenceUrl" target="_blank" rel="noopener noreferrer">View evidence →</a> }
+                  <div class="timeline-content">
+                    <strong class="event-title">{{ event.title }}</strong>
+                    <div class="timeline-meta mono">{{ event.occurredAt ? (event.occurredAt | date:'medium') : event.status }}</div>
+                    @if (event.evidenceUrl) {
+                      <a class="evidence-link" [href]="event.evidenceUrl" target="_blank" rel="noopener noreferrer">View Evidence Proof &rarr;</a>
+                    }
                   </div>
                 </li>
               }
             </ol>
           }
         </section>
-
-        @if (adminAccess.isAdmin()) {
-          <div class="admin-section" style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-            <h3 class="section-title">Admin: Project Approval</h3>
-            @if (project()?.status === 'Pending') {
-              <button class="btn btn-primary" (click)="onApprove()">Approve Project</button>
-              <button class="btn btn-outline" (click)="onReject()">Reject Project</button>
-            } @else {
-              <p class="status-notice">Project is already {{ project()?.status | lowercase }}.</p>
-            }
-          </div>
-        }
 
         <app-challenged-reports [projectId]="'' + p.id" />
       } @else if (loading()) {
@@ -100,28 +111,176 @@ import { AdminAccessService } from '../../shared/services/admin-access.service';
     </div>
   `,
   styles: [`
-    .detail-page { max-width: 800px; }
-    .back-link { display: inline-block; margin-bottom: 24px; color: #3b82f6; text-decoration: none; font-size: 0.875rem; }
-    .back-link:hover { text-decoration: underline; }
-    .loading-section { display: flex; justify-content: center; padding: 48px 0; }
-    .error-card { background: #fef2f2; color: #ef4444; padding: 24px; border-radius: 12px; text-align: center; }
-    .detail-card { background: #fff; border-radius: 12px; padding: 32px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .timeline-card { margin-top: 24px; background: #fff; border-radius: 12px; padding: 24px 32px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .timeline { list-style: none; padding: 0; margin: 20px 0 0; }
-    .timeline li { position: relative; display: grid; grid-template-columns: 18px 1fr; gap: 12px; padding-bottom: 20px; }
-    .timeline-dot { width: 10px; height: 10px; margin-top: 5px; border-radius: 50%; background: #22c55e; }
-    .timeline-dot.pending { background: #f59e0b; }
-    .timeline-meta, .timeline-empty { color: #6b7280; font-size: 0.8125rem; }
-    .timeline a { color: #3b82f6; font-size: 0.8125rem; }
-    .detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .detail-title { font-size: 1.5rem; font-weight: 700; }
-    .detail-body { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .detail-field { display: flex; flex-direction: column; }
-    .field-label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .field-value { font-size: 0.9375rem; color: #1a1a2e; }
-    .field-value.mono { font-family: monospace; font-size: 0.8125rem; word-break: break-all; }
-    .field-value.link { color: #3b82f6; text-decoration: none; }
-    .field-value.link:hover { text-decoration: underline; }
+    .detail-page {
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .back-link {
+      font-size: 13px;
+      color: var(--color-ash);
+      text-decoration: none;
+      font-weight: 500;
+    }
+    .back-link:hover {
+      color: var(--color-chalk);
+    }
+    .detail-card {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .header-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--color-ash);
+    }
+    .detail-title {
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--color-chalk);
+      margin-top: 4px;
+    }
+    .detail-body {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    .detail-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .field-label {
+      font-size: 11px;
+      color: var(--color-ash);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .field-value {
+      font-size: 15px;
+      color: var(--color-chalk);
+    }
+    .field-value.mint {
+      color: var(--color-signal-mint);
+    }
+    .field-value.link {
+      color: var(--color-signal-mint);
+      text-decoration: none;
+      font-size: 13px;
+    }
+    .field-value.link:hover {
+      opacity: 0.85;
+    }
+    .admin-approval-bar {
+      border-top: 1px solid var(--color-graphite);
+      padding-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .security-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: var(--color-ash);
+    }
+    .admin-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    .timeline-card {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      padding: 24px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .timeline-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--color-chalk);
+    }
+    .timeline-empty {
+      color: var(--color-ash);
+      font-size: 13px;
+    }
+    .timeline {
+      list-style: none;
+      padding: 0;
+      margin: 8px 0 0;
+    }
+    .timeline li {
+      position: relative;
+      display: grid;
+      grid-template-columns: 18px 1fr;
+      gap: 14px;
+      padding-bottom: 20px;
+    }
+    .timeline-dot {
+      width: 8px;
+      height: 8px;
+      margin-top: 6px;
+      border-radius: 50%;
+      background: var(--color-signal-mint);
+    }
+    .timeline-dot.pending {
+      background: var(--color-warning);
+    }
+    .timeline-content {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .event-title {
+      color: var(--color-chalk);
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .timeline-meta {
+      color: var(--color-ash);
+      font-size: 12px;
+    }
+    .evidence-link {
+      color: var(--color-signal-mint);
+      font-size: 12px;
+      text-decoration: none;
+    }
+    .loading-section {
+      display: flex;
+      justify-content: center;
+      padding: 64px 0;
+    }
+    .error-card {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      color: var(--color-danger);
+      padding: 32px;
+      border-radius: var(--radius-cards);
+      text-align: center;
+    }
+    .status-notice {
+      font-size: 13px;
+      color: var(--color-ash);
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -194,4 +353,3 @@ export class ProjectDetailComponent implements OnInit {
     });
   }
 }
-

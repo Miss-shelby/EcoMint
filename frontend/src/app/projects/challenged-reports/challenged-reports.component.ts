@@ -3,9 +3,8 @@ import { CommonModule } from '@angular/common';
 import { ApiService, ChallengedReportSummary } from '../../shared/services/api.service';
 
 /**
- * Shows the challenged reports for a project (issue #3). Each entry links to the
- * full challenge state via the API; this panel surfaces the counter-evidence
- * hash, challenger, submitted time, and resolution so reviewers can act.
+ * Shows the challenged reports for a project.
+ * Sandclock style: Carbon container, hairline Graphite border, danger badges.
  */
 @Component({
   selector: 'app-challenged-reports',
@@ -13,32 +12,45 @@ import { ApiService, ChallengedReportSummary } from '../../shared/services/api.s
   imports: [CommonModule],
   template: `
     <div class="challenged-card">
-      <h3 class="section-title">Challenged Reports</h3>
+      <div class="challenged-header">
+        <h3 class="section-title">Challenged Oracle Reports</h3>
+        <span class="pill-tag">{{ reports().length }} Records</span>
+      </div>
 
       @if (loading()) {
-        <p class="muted">Loading challenge review…</p>
+        <p class="muted">Loading challenge verification data...</p>
       } @else if (error()) {
         <p class="error-msg">{{ error() }}</p>
       } @else if (reports().length === 0) {
-        <p class="muted">No active challenges for this project.</p>
+        <p class="muted">No active emissions challenges filed for this project.</p>
       } @else {
         <ul class="challenged-list">
           @for (entry of reports(); track entry.report.id) {
             <li class="challenged-item">
               <div class="row">
                 <span class="report-id">Report #{{ entry.report.id }}</span>
-                <span class="status" [class.challenged]="entry.report.status === 'Challenged'">
+                <span class="badge badge-danger">
+                  <span class="badge-dot danger"></span>
                   {{ entry.report.status }}
                 </span>
               </div>
               @if (entry.challenge; as c) {
                 <div class="meta">
-                  <div><span class="label">Challenger</span> <span class="mono">{{ c.challengerAddress }}</span></div>
-                  <div><span class="label">Counter-evidence</span> <span class="mono">{{ c.counterEvidenceHash }}</span></div>
-                  <div><span class="label">Submitted</span> {{ c.submittedAt | date: 'medium' }}</div>
-                  <div>
-                    <span class="label">Resolution</span>
-                    {{ c.resolved ? (c.resolution || 'Resolved') : 'Pending' }}
+                  <div class="meta-row">
+                    <span class="label">Challenger:</span>
+                    <span class="mono">{{ c.challengerAddress }}</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="label">Evidence IPFS:</span>
+                    <span class="mono">{{ c.counterEvidenceHash }}</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="label">Submitted:</span>
+                    <span>{{ c.submittedAt | date: 'medium' }}</span>
+                  </div>
+                  <div class="meta-row">
+                    <span class="label">Resolution:</span>
+                    <span>{{ c.resolved ? (c.resolution || 'Resolved') : 'Under Review' }}</span>
                   </div>
                 </div>
               } @else {
@@ -51,19 +63,81 @@ import { ApiService, ChallengedReportSummary } from '../../shared/services/api.s
     </div>
   `,
   styles: [`
-    .challenged-card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .section-title { font-size: 1rem; font-weight: 600; margin-bottom: 12px; }
-    .muted { font-size: 0.8125rem; color: #6b7280; }
-    .error-msg { font-size: 0.8125rem; color: #ef4444; padding: 8px; background: #fef2f2; border-radius: 6px; }
-    .challenged-list { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 12px; }
-    .challenged-item { border: 1px solid #fecaca; background: #fef2f2; border-radius: 8px; padding: 12px 14px; }
-    .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .report-id { font-weight: 600; }
-    .status { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 999px; background: #fee2e2; color: #991b1b; }
-    .status.challenged { background: #fee2e2; color: #991b1b; }
-    .meta { display: flex; flex-direction: column; gap: 4px; font-size: 0.8125rem; }
-    .label { color: #6b7280; text-transform: uppercase; font-size: 0.7rem; margin-right: 6px; }
-    .mono { font-family: monospace; word-break: break-all; }
+    .challenged-card {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      padding: 24px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .challenged-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--color-chalk);
+    }
+    .muted {
+      font-size: 13px;
+      color: var(--color-ash);
+    }
+    .error-msg {
+      font-size: 13px;
+      color: var(--color-danger);
+      padding: 10px 14px;
+      background: var(--color-danger-dim);
+      border-radius: 6px;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    .challenged-list {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .challenged-item {
+      border: 1px solid var(--color-graphite);
+      background: var(--color-abyss);
+      border-radius: 8px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .report-id {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--color-chalk);
+    }
+    .meta {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .meta-row {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+    }
+    .label {
+      color: var(--color-ash);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      min-width: 100px;
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

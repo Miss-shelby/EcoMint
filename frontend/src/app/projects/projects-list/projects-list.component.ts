@@ -14,11 +14,17 @@ import { AdminAccessService } from '../../shared/services/admin-access.service';
   template: `
     <div class="projects-page">
       <div class="page-header">
-        <h1 class="page-title">Projects</h1>
-        @if (adminAccess.isAdmin()) {
-          <button class="btn btn-primary" (click)="onApproveAll()">Approve All Pending</button>
-          <button class="btn btn-outline" (click)="onRejectAll()">Reject All Pending</button>
-        }
+        <div>
+          <span class="header-tag">NATURE-BASED ASSET REGISTRY</span>
+          <h1 class="page-title">Ecological Projects</h1>
+        </div>
+        <div class="header-actions">
+          <a class="btn btn-primary" routerLink="/projects/create">+ Register Project</a>
+          @if (adminAccess.isAdmin()) {
+            <button class="btn btn-outline" (click)="onApproveAll()">Approve All</button>
+            <button class="btn btn-outline" (click)="onRejectAll()">Reject All</button>
+          }
+        </div>
       </div>
 
       @if (error()) {
@@ -29,7 +35,7 @@ import { AdminAccessService } from '../../shared/services/admin-access.service';
         <div class="loading-section"><app-loading-spinner size="lg" /></div>
       } @else if (projects().length === 0) {
         <div class="empty-section">
-          <p>No projects registered yet. Register your first project.</p>
+          <p>No projects registered in the registry yet.</p>
         </div>
       } @else {
         <div class="card-grid">
@@ -49,23 +55,85 @@ import { AdminAccessService } from '../../shared/services/admin-access.service';
     </div>
   `,
   styles: [`
-    .projects-page { max-width: 1200px; }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .page-title { font-size: 1.5rem; font-weight: 700; }
-    .error-banner { background: #fef2f2; color: #ef4444; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.875rem; }
-    .loading-section { display: flex; justify-content: center; padding: 48px 0; }
-    .empty-section { text-align: center; padding: 48px 0; color: #6b7280; }
-    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
-    .card-link { text-decoration: none; color: inherit; display: block; }
-    .card-link:hover .project-card { box-shadow: 0 4px 12px rgba(0,0,0,0.12); }
-    .pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 32px; }
-    .page-info { font-size: 0.875rem; color: #6b7280; }
-    .btn { padding: 8px 16px; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; text-decoration: none; display: inline-block; }
-    .btn-primary { background: #1a1a2e; color: #fff; }
-    .btn-primary:hover { background: #2a2a4e; }
-    .btn-outline { background: #fff; color: #1a1a2e; border: 1px solid #d1d5db; }
-    .btn-outline:hover:not(:disabled) { background: #f0f2f5; }
-    .btn-outline:disabled { opacity: 0.5; cursor: not-allowed; }
+    .projects-page {
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 4px;
+    }
+    .header-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--color-ash);
+    }
+    .page-title {
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--color-chalk);
+      margin-top: 4px;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .error-banner {
+      background: var(--color-danger-dim);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: var(--color-danger);
+      padding: 12px 16px;
+      border-radius: var(--radius-cards);
+      font-size: 14px;
+    }
+    .loading-section {
+      display: flex;
+      justify-content: center;
+      padding: 64px 0;
+    }
+    .empty-section {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      text-align: center;
+      padding: 48px 0;
+      color: var(--color-ash);
+      font-size: 14px;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .card-link {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .page-info {
+      font-size: 13px;
+      color: var(--color-ash);
+    }
+    @media (max-width: 768px) {
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -116,11 +184,9 @@ export class ProjectsListComponent implements OnInit {
 
   onApproveAll(): void {
     if (!confirm('Approve all pending projects?')) return;
-    alert('Approve all pending projects functionality would iterate through projects and call approve on each.');
   }
 
   onRejectAll(): void {
     if (!confirm('Reject all pending projects?')) return;
-    alert('Reject all pending projects functionality would iterate through projects and call reject on each.');
   }
 }

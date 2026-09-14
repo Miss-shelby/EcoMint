@@ -1,35 +1,56 @@
-import { Component, input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-
-const STATUS_COLORS: Record<string, string> = {
-  Active: '#22c55e',
-  Pending: '#eab308',
-  Matured: '#3b82f6',
-  Defaulted: '#ef4444',
-  Rejected: '#ef4444',
-  Verified: '#22c55e',
-  Approved: '#22c55e',
-  Inactive: '#6b7280',
-  Open: '#22c55e',
-  PartiallyFilled: '#f59e0b',
-  Filled: '#3b82f6',
-  Cancelled: '#6b7280',
-  Expired: '#ef4444',
-  Confirmed: '#22c55e',
-  Failed: '#ef4444',
-};
 
 @Component({
   selector: 'app-status-badge',
   standalone: true,
   imports: [CommonModule],
   template: `
-    <span class="status-badge" [style.background]="color()" [style.color]="'#fff'">
-      {{ status() }}
+    <span class="status-pill">
+      <span class="status-dot" [ngClass]="dotClass()"></span>
+      <span class="status-text">{{ status() }}</span>
     </span>
   `,
   styles: [`
-    .status-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: var(--radius-pills);
+      background-color: var(--color-graphite);
+      color: var(--color-chalk);
+      font-family: var(--font-inter);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--color-ash);
+    }
+
+    .status-dot.dot-mint {
+      background-color: var(--color-signal-mint);
+      box-shadow: 0 0 6px rgba(63, 226, 128, 0.5);
+    }
+
+    .status-dot.dot-warning {
+      background-color: var(--color-warning);
+    }
+
+    .status-dot.dot-danger {
+      background-color: var(--color-danger);
+    }
+
+    .status-dot.dot-ash {
+      background-color: var(--color-ash);
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -37,7 +58,17 @@ export class StatusBadgeComponent {
   readonly status = input.required<string>();
   readonly variant = input<'bond' | 'project' | 'report'>('bond');
 
-  color(): string {
-    return STATUS_COLORS[this.status()] || '#6b7280';
-  }
+  readonly dotClass = computed(() => {
+    const s = (this.status() || '').toLowerCase();
+    if (['active', 'verified', 'approved', 'open', 'confirmed'].includes(s)) {
+      return 'dot-mint';
+    }
+    if (['pending', 'partiallyfilled', 'connecting'].includes(s)) {
+      return 'dot-warning';
+    }
+    if (['defaulted', 'rejected', 'failed', 'expired'].includes(s)) {
+      return 'dot-danger';
+    }
+    return 'dot-ash';
+  });
 }

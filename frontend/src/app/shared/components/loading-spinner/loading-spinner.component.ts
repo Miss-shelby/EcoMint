@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 
 const SIZE_MAP: Record<string, string> = {
   sm: '16px',
-  md: '32px',
-  lg: '48px',
+  md: '28px',
+  lg: '44px',
 };
 
 @Component({
@@ -15,8 +15,17 @@ const SIZE_MAP: Record<string, string> = {
     <div class="spinner" [style.width]="sizePx()" [style.height]="sizePx()"></div>
   `,
   styles: [`
-    .spinner { border: 3px solid #e5e7eb; border-top-color: #1a1a2e; border-radius: 50%; animation: spin 0.6s linear infinite; display: inline-block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      border: 2px solid var(--color-graphite);
+      border-top-color: var(--color-signal-mint);
+      border-radius: 50%;
+      animation: spin 0.7s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+      display: inline-block;
+      box-shadow: 0 0 10px rgba(63, 226, 128, 0.15);
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

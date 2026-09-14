@@ -15,8 +15,11 @@ import { PendingTransactionsService } from '../../shared/services/pending-transa
   imports: [CommonModule, RouterModule, ReactiveFormsModule, QuoteBalanceComponent],
   template: `
     <div class="sell-page">
-      <a class="back-link" routerLink="/marketplace">← Back to Marketplace</a>
-      <h1 class="page-title">List Tokens for Sale</h1>
+      <a class="back-link" routerLink="/marketplace">&larr; Back to Marketplace</a>
+      <div class="page-header">
+        <span class="header-tag">DEX ORDER CREATOR</span>
+        <h1 class="page-title">List Tokens on DEX</h1>
+      </div>
 
       @if (error()) {
         <div class="error-banner">{{ error() }}</div>
@@ -30,84 +33,166 @@ import { PendingTransactionsService } from '../../shared/services/pending-transa
 
       <form class="sell-form" [formGroup]="form" (ngSubmit)="onSubmit()">
         <div class="form-group">
-          <label class="form-label" for="bondId">Bond</label>
+          <label class="form-label" for="bondId">Bond Asset</label>
           <select id="bondId" class="form-select" formControlName="bondId">
-            <option [ngValue]="null" disabled>Select a bond</option>
+            <option [ngValue]="null" disabled>Select a held bond</option>
             @for (bond of bonds(); track bond.id) {
-              <option [ngValue]="bond.id">Bond #{{ bond.id }} — {{ bond.creditType }}</option>
+              <option [ngValue]="bond.id">Bond #{{ bond.id }} &bull; {{ bond.creditType }} (Balance: {{ bond.balance }})</option>
             }
           </select>
           @if (form.get('bondId')?.invalid && form.get('bondId')?.touched) {
-            <span class="form-error">Select a bond</span>
+            <span class="form-error">Select a bond to list</span>
           }
         </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="amount">Amount</label>
+            <label class="form-label" for="amount">Units to Sell</label>
             <input id="amount" type="number" class="form-input" formControlName="amount" placeholder="100" />
             @if (form.get('amount')?.hasError('exceedsBalance')) {
-              <span class="form-error">Amount exceeds your balance of {{ selectedBalance() }}</span>
+              <span class="form-error">Amount exceeds balance of {{ selectedBalance() }}</span>
             } @else if (form.get('amount')?.invalid && form.get('amount')?.touched) {
               <span class="form-error">Enter a positive amount</span>
             }
           </div>
-          @if (selectedBalance() !== null) {
-            <div class="balance-hint">Available balance: {{ selectedBalance() }}</div>
-          }
           <div class="form-group">
-            <label class="form-label" for="pricePerToken">Price per Token</label>
+            <label class="form-label" for="pricePerToken">Price Per Unit</label>
             <input id="pricePerToken" type="number" class="form-input" formControlName="pricePerToken" placeholder="10.50" step="0.01" />
             @if (form.get('pricePerToken')?.invalid && form.get('pricePerToken')?.touched) {
-              <span class="form-error">Enter a positive price</span>
+              <span class="form-error">Enter a positive unit price</span>
             }
           </div>
         </div>
 
+        @if (selectedBalance() !== null) {
+          <div class="balance-hint mono">Available held balance: {{ selectedBalance() }} units</div>
+        }
+
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="quoteAsset">Quote Asset</label>
+            <label class="form-label" for="quoteAsset">Settlement Currency</label>
             <select id="quoteAsset" class="form-select" formControlName="quoteAsset">
               <option value="USDC">USDC</option>
               <option value="XLM">XLM</option>
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label" for="expiresAfterSeconds">Expires After (seconds)</label>
-            <input id="expiresAfterSeconds" type="number" class="form-input" formControlName="expiresAfterSeconds" placeholder="604800 (7 days)" />
+            <label class="form-label" for="expiresAfterSeconds">Order Expiration (Seconds)</label>
+            <input id="expiresAfterSeconds" type="number" class="form-input mono" formControlName="expiresAfterSeconds" placeholder="604800 (7 days)" />
           </div>
         </div>
 
         <div class="form-actions">
           <a class="btn btn-outline" routerLink="/marketplace">Cancel</a>
           <button type="submit" class="btn btn-primary" [disabled]="form.invalid || submitting()">
-            {{ submitting() ? 'Listing...' : 'List for Sale' }}
+            {{ submitting() ? 'Creating DEX Listing...' : 'Create Listing' }}
           </button>
         </div>
       </form>
     </div>
   `,
   styles: [`
-    .sell-page { max-width: 640px; }
-    .back-link { display: inline-block; margin-bottom: 16px; color: #3b82f6; text-decoration: none; font-size: 0.875rem; }
-    .back-link:hover { text-decoration: underline; }
-    .page-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 24px; }
-    .error-banner { background: #fef2f2; color: #ef4444; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 0.875rem; }
-    .quote-section { margin-bottom: 24px; }
-    .sell-form { background: #fff; border-radius: 12px; padding: 32px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .form-group { display: flex; flex-direction: column; margin-bottom: 20px; flex: 1; }
-    .form-label { font-size: 0.8125rem; font-weight: 600; color: #1a1a2e; margin-bottom: 6px; }
-    .form-input, .form-select { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.875rem; outline: none; transition: border-color 0.15s; background: #fff; }
-    .form-input:focus, .form-select:focus { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
-    .form-error { font-size: 0.75rem; color: #ef4444; margin-top: 4px; }
-    .form-row { display: flex; gap: 16px; }
-    .form-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb; }
-    .btn { padding: 10px 20px; border-radius: 8px; font-size: 0.875rem; font-weight: 500; cursor: pointer; border: none; text-decoration: none; display: inline-block; }
-    .btn-primary { background: #1a1a2e; color: #fff; }
-    .btn-primary:hover:not(:disabled) { background: #2a2a4e; }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-outline { background: #fff; color: #1a1a2e; border: 1px solid #d1d5db; }
-    .btn-outline:hover { background: #f0f2f5; }
+    .sell-page {
+      max-width: 680px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .back-link {
+      font-size: 13px;
+      color: var(--color-ash);
+      text-decoration: none;
+    }
+    .back-link:hover {
+      color: var(--color-chalk);
+    }
+    .page-header {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .header-tag {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      color: var(--color-ash);
+    }
+    .page-title {
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--color-chalk);
+    }
+    .error-banner {
+      background: var(--color-danger-dim);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: var(--color-danger);
+      padding: 12px 16px;
+      border-radius: var(--radius-cards);
+      font-size: 14px;
+    }
+    .quote-section {
+      width: 100%;
+    }
+    .sell-form {
+      background: var(--color-carbon);
+      border: 1px solid var(--color-graphite);
+      border-radius: var(--radius-cards);
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+    .form-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-ash);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .form-input, .form-select {
+      padding: 12px 14px;
+      background: var(--color-abyss);
+      border: 1px solid var(--color-graphite);
+      border-radius: 8px;
+      color: var(--color-chalk);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: var(--color-signal-mint);
+    }
+    .form-error {
+      font-size: 12px;
+      color: var(--color-danger);
+    }
+    .balance-hint {
+      font-size: 12px;
+      color: var(--color-signal-mint);
+    }
+    .form-row {
+      display: flex;
+      gap: 16px;
+    }
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      padding-top: 16px;
+      border-top: 1px solid var(--color-graphite);
+    }
+    @media (max-width: 600px) {
+      .form-row {
+        flex-direction: column;
+      }
+    }
   `],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -169,10 +254,6 @@ export class MarketplaceSellComponent implements OnInit {
   }
 
   onSubmit(): void {
-    // Guards against a duplicate listing being submitted while one is
-    // already in flight (#91): the submit button's [disabled] binding covers
-    // a click, but a native form submit (e.g. pressing Enter) fires
-    // (ngSubmit) regardless of a button's disabled attribute.
     if (this.form.invalid || this.submitting()) return;
     this.submitting.set(true);
     this.error.set('');

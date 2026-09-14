@@ -1,3 +1,447 @@
-/* Verdant Bond Protocol — base styles */
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a2e; background: #f0f2f5; }
+/* ==========================================================================
+   EcoMint — Sandclock DeFi Command Terminal Style System
+   Theme: Matte Black Console with Signal Mint Accents
+   ========================================================================== */
+
+:root {
+  /* Surfaces & Colors */
+  --color-abyss: #0a0a0a;
+  --color-carbon: #171717;
+  --color-graphite: #222222;
+  --color-graphite-light: #2c2c2c;
+  --color-ash: #9b9b9b;
+  --color-chalk: #ffffff;
+  --color-signal-mint: #3fe280;
+  --color-signal-mint-dim: rgba(63, 226, 128, 0.12);
+  --color-danger: #ef4444;
+  --color-danger-dim: rgba(239, 68, 68, 0.12);
+  --color-warning: #f59e0b;
+
+  /* Typography */
+  --font-display: 'Space Grotesk', 'Aeonik', ui-sans-serif, system-ui, sans-serif;
+  --font-inter: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+  /* Type Scale */
+  --text-caption: 14px;
+  --leading-caption: 1.43;
+  --tracking-caption: 0.05em;
+
+  --text-body: 16px;
+  --leading-body: 1.5;
+  --tracking-body: 0.05em;
+
+  --text-subheading: 20px;
+  --leading-subheading: 1.4;
+  --tracking-subheading: 0.05em;
+
+  --text-heading-sm: 24px;
+  --leading-heading-sm: 1.33;
+  --tracking-heading-sm: 0.04em;
+
+  --text-heading: 36px;
+  --leading-heading: 1.11;
+  --tracking-heading: -0.02em;
+
+  --text-display: 72px;
+  --leading-display: 1.0;
+  --tracking-display: -0.03em;
+
+  /* Spacing */
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+  --spacing-40: 40px;
+  --spacing-48: 48px;
+  --spacing-64: 64px;
+  --spacing-80: 80px;
+
+  /* Layout */
+  --page-max-width: 1200px;
+  --radius-cards: 12px;
+  --radius-buttons: 16px;
+  --radius-pills: 9999px;
+  --radius-hero-button: 64px;
+}
+
+/* Base Reset & Typography */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background-color: var(--color-abyss);
+  color: var(--color-chalk);
+  font-family: var(--font-inter);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-inter);
+  font-weight: 500;
+  color: var(--color-chalk);
+  letter-spacing: 0.02em;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.text-display {
+  font-family: var(--font-display);
+  font-size: var(--text-display);
+  line-height: var(--leading-display);
+  letter-spacing: var(--tracking-display);
+  font-weight: 500;
+}
+
+.text-ash {
+  color: var(--color-ash);
+}
+
+.text-mint {
+  color: var(--color-signal-mint);
+}
+
+.text-chalk {
+  color: var(--color-chalk);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  letter-spacing: 0;
+}
+
+/* Links */
+a {
+  color: var(--color-chalk);
+  text-decoration: none;
+  transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+a:hover {
+  opacity: 0.85;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  font-family: var(--font-inter);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  border-radius: var(--radius-buttons);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Primary CTA Button: Signal Mint with Abyss text */
+.btn-primary, .btn-mint {
+  background-color: var(--color-signal-mint);
+  color: var(--color-abyss);
+  border-color: var(--color-signal-mint);
+  font-weight: 600;
+}
+
+.btn-primary:hover:not(:disabled), .btn-mint:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+}
+
+/* Ghost Button: Transparent with Graphite border */
+.btn-ghost, .btn-outline {
+  background-color: transparent;
+  border: 1px solid var(--color-graphite);
+  color: var(--color-chalk);
+}
+
+.btn-ghost:hover:not(:disabled), .btn-outline:hover:not(:disabled) {
+  border-color: var(--color-ash);
+  background-color: var(--color-carbon);
+}
+
+/* Connect Wallet Button: Inverted Chalk Pill */
+.btn-wallet-pill {
+  background-color: var(--color-chalk);
+  color: var(--color-abyss);
+  border-radius: var(--radius-pills);
+  font-weight: 600;
+  padding: 10px 20px;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  border: none;
+}
+
+.btn-wallet-pill:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.btn-hero {
+  padding: 16px 36px;
+  font-size: 16px;
+  border-radius: var(--radius-hero-button);
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 13px;
+  border-radius: 12px;
+}
+
+/* Cards & Containers */
+.card, .panel {
+  background-color: var(--color-carbon);
+  border: 1px solid var(--color-graphite);
+  border-radius: var(--radius-cards);
+  padding: var(--spacing-24);
+  transition: border-color 0.15s ease;
+}
+
+.card:hover {
+  border-color: #333333;
+}
+
+/* Live TVL / Money Stat Card */
+.card-live, .stat-card-live {
+  background-color: var(--color-carbon);
+  border: 1px solid var(--color-signal-mint);
+  border-radius: var(--radius-cards);
+  padding: var(--spacing-24);
+}
+
+.stat-label {
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-ash);
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-family: var(--font-inter);
+  font-size: 32px;
+  font-weight: 500;
+  color: var(--color-chalk);
+  letter-spacing: -0.01em;
+}
+
+.stat-value.mint {
+  color: var(--color-signal-mint);
+}
+
+/* Tags & Badges */
+.badge, .pill-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pills);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  background-color: var(--color-graphite);
+  color: var(--color-chalk);
+  border: 1px solid transparent;
+}
+
+.badge-mint {
+  background-color: var(--color-signal-mint-dim);
+  color: var(--color-signal-mint);
+  border-color: rgba(63, 226, 128, 0.3);
+}
+
+.badge-danger {
+  background-color: var(--color-danger-dim);
+  color: var(--color-danger);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--color-signal-mint);
+}
+
+.badge-dot.danger {
+  background-color: var(--color-danger);
+}
+
+.badge-dot.neutral {
+  background-color: var(--color-ash);
+}
+
+/* Form Controls */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-ash);
+}
+
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  background-color: var(--color-abyss);
+  border: 1px solid var(--color-graphite);
+  color: var(--color-chalk);
+  font-family: var(--font-inter);
+  font-size: 15px;
+  letter-spacing: 0.05em;
+  padding: 12px 16px;
+  border-radius: 12px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--color-signal-mint);
+}
+
+.form-input::placeholder, .form-textarea::placeholder {
+  color: #555555;
+}
+
+.form-select option {
+  background-color: var(--color-carbon);
+  color: var(--color-chalk);
+}
+
+.form-error {
+  font-size: 12px;
+  color: var(--color-danger);
+  margin-top: 4px;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: var(--color-ash);
+  margin-top: 4px;
+}
+
+/* Tables */
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--color-graphite);
+  border-radius: var(--radius-cards);
+  background-color: var(--color-carbon);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 14px;
+}
+
+.data-table th {
+  padding: 14px 20px;
+  color: var(--color-ash);
+  font-weight: 500;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-bottom: 1px solid var(--color-graphite);
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.data-table td {
+  padding: 16px 20px;
+  color: var(--color-chalk);
+  border-bottom: 1px solid var(--color-graphite);
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tr:hover td {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Grids & Layout */
+.container {
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: 0 var(--spacing-24);
+  width: 100%;
+}
+
+.section-gap {
+  margin-top: var(--spacing-64);
+  margin-bottom: var(--spacing-64);
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-24);
+}
+
+.grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-24);
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-16);
+}
+
+@media (max-width: 900px) {
+  .grid-2, .grid-3, .grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Custom Scrollbar for Dark Console */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-abyss);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-graphite);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #333333;
+}
