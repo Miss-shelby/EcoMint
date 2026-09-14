@@ -163,6 +163,7 @@ export class ProjectCreateComponent {
   readonly error = signal('');
   readonly boundaryError = signal('');
   readonly boundaryFileName = signal('');
+  readonly methodologyCodes = METHODOLOGY_CODES;
   private parsedBoundary: any = null;
 
   form: FormGroup = this.fb.group({

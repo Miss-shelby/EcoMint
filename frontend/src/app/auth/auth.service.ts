@@ -8,8 +8,9 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly walletService = inject(WalletService);
 
-  readonly token = signal<string | null>(localStorage.getItem('nbs_access_token'));
+  readonly token = signal<string | null>(localStorage.getItem('ecomint_access_token') || localStorage.getItem('nbs_access_token'));
   readonly isAuthenticated = computed(() => this.token() !== null);
+  readonly sessionReady = computed(() => this.isAuthenticated() && this.walletService.isConnected());
 
   private isRetryableChallengeError(err: unknown): boolean {
     if (!(err instanceof HttpErrorResponse)) return false;
@@ -55,8 +56,8 @@ export class AuthService {
           originalChallenge: challenge,
         });
 
-        localStorage.setItem('nbs_access_token', accessToken);
-        localStorage.setItem('nbs_refresh_token', refreshToken);
+        localStorage.setItem('ecomint_access_token', accessToken);
+        localStorage.setItem('ecomint_refresh_token', refreshToken);
         this.token.set(accessToken);
         return;
       } catch (err) {
@@ -68,17 +69,19 @@ export class AuthService {
   }
 
   async refresh(): Promise<void> {
-    const refreshToken = localStorage.getItem('nbs_refresh_token');
+    const refreshToken = localStorage.getItem('ecomint_refresh_token') || localStorage.getItem('nbs_refresh_token');
     if (!refreshToken) throw new Error('No refresh token available');
 
     const { accessToken } = await firstValueFrom(
       this.http.post<{ accessToken: string }>('/api/auth/refresh', { refreshToken }),
     );
-    localStorage.setItem('nbs_access_token', accessToken);
+    localStorage.setItem('ecomint_access_token', accessToken);
     this.token.set(accessToken);
   }
 
   logout(): void {
+    localStorage.removeItem('ecomint_access_token');
+    localStorage.removeItem('ecomint_refresh_token');
     localStorage.removeItem('nbs_access_token');
     localStorage.removeItem('nbs_refresh_token');
     this.token.set(null);

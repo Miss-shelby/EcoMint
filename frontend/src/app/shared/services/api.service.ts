@@ -12,6 +12,7 @@ import {
   QuoteBalanceResponse, QuoteTransactionResponse,
   QuoteAsset, DepositQuoteDto, WithdrawQuoteDto, HolderResponse,
   ClaimableCreditDetail, ClaimableCreditsResponse,
+  BondResponse, CouponDistributionResponse, HolderListResponse, TransactionStatusResponse,
 } from '../interfaces/bond.interface';
 
 export interface ProblemDetails {
@@ -412,4 +413,14 @@ export class ApiService {
       this.http.get<BondDetailResponse>(`/api/bonds/${id}/detail`, { params }),
     );
   }
+
+  getTransactionStatus(hash: string): Observable<TransactionStatusResponse> {
+    return this.withProblemDetails(
+      this.http.get<TransactionStatusResponse>(`/api/stellar/transactions/${hash}`, {
+        headers: this.headers(),
+      }),
+    );
+  }
 }
+
+

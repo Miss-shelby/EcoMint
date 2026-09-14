@@ -10,7 +10,7 @@ export interface PendingTx {
   submittedAt: number;
 }
 
-const STORAGE_KEY = 'nbs_pending_txs';
+const STORAGE_KEY = 'ecomint_pending_txs';
 const POLL_INTERVAL_MS = 4000;
 
 function loadFromStorage(): PendingTx[] {

@@ -14,6 +14,15 @@ import { AdminAccessService } from '../../shared/services/admin-access.service';
 import { AdminIntentService } from '../../shared/services/admin-intent.service';
 import { Bond, ClaimableCreditsResponse } from '../../shared/interfaces/bond.interface';
 import { formatCreditMinorUnits } from '../../shared/utils/credit-format';
+import { PendingTransactionsService } from '../../shared/services/pending-transactions.service';
+
+function appErrorMessage(err: unknown, fallback: string): string {
+  if (err && typeof err === 'object') {
+    const e = err as any;
+    return e.error?.detail || e.error?.message || e.message || fallback;
+  }
+  return fallback;
+}
 
 @Component({
   selector: 'app-bond-detail',
@@ -316,7 +325,7 @@ import { formatCreditMinorUnits } from '../../shared/utils/credit-format';
                   @if (adminIntent.hasSecret()) {
                     <app-admin-secret-prompt
                       action="Distribute coupon"
-                      [description]="'Bond #' + b.id + ' — distribute coupon for period ' + couponEligibility()!.periodIndex + '.'"
+                      [description]="'Bond #' + b.id + ' — distribute coupon.'"
                       (unlocked)="onSecretUnlocked()"
                       (cancelled)="secretPromptOpen.set(false)"
                     />
@@ -444,8 +453,10 @@ export class BondDetailComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly apiService = inject(ApiService);
   private readonly walletService = inject(WalletService);
+  readonly authService = inject(AuthService);
   private readonly adminAccess = inject(AdminAccessService);
   readonly adminIntent = inject(AdminIntentService);
+  private readonly pendingTx = inject(PendingTransactionsService);
   private readonly coordinator = inject(BondDetailReloadCoordinator);
 
   /**
@@ -768,7 +779,7 @@ private submitSweep(): void {
     this.apiService.mature(b.id).subscribe({
       next: (res) => {
         this.matureSuccess.set(true);
-        this.matureTx.set(res.transactionHash);
+        this.matureTx.set(res.transactionHash || '');
         this.pendingTx.register(res.transactionHash, 'mature');
         this.matureSubmitting.set(false);
         this.reload(b.id);
@@ -801,4 +812,4 @@ private submitSweep(): void {
     });
   }
 }
-}
+

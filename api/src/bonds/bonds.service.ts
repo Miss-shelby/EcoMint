@@ -29,7 +29,6 @@ import {
   CreditTypeEnum,
   ClaimableCreditDetail,
   ClaimableCreditsResponse,
-  BondDetailResponse,
 } from './interfaces/bond.interface';
 import { toBigIntString } from '../common/utils';
 import { ConfigService } from '../config/config.service';
@@ -123,6 +122,29 @@ export class BondsService {
     const bond = await this.buildBondResponse(id);
     await this.redis.setEx(`bond:${id}`, 300, JSON.stringify(bond));
     return bond;
+  }
+
+  async previewSubscribe(
+    id: number,
+    amount: number,
+  ): Promise<{ remaining_supply: number; requested_amount: number; expected_failure: string | null }> {
+    const bond = await this.findOne(id);
+    const total = Number(bond.totalSupply);
+    const subscribed = Number(bond.totalSubscribed);
+    const remaining = Math.max(0, total - subscribed);
+    let expected_failure: string | null = null;
+    if (bond.status !== BondStatusEnum.Active) {
+      expected_failure = 'Bond is not active';
+    } else if (bond.maturityStatus === BondMaturityStatusEnum.Matured) {
+      expected_failure = 'Bond has matured';
+    } else if (amount > remaining) {
+      expected_failure = 'Requested amount exceeds remaining supply';
+    }
+    return {
+      remaining_supply: remaining,
+      requested_amount: amount,
+      expected_failure,
+    };
   }
 
   async findHeldByAddress(address: string): Promise<HeldBondResponse[]> {

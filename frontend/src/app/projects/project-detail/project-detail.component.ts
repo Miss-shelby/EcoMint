@@ -128,6 +128,7 @@ import { AdminAccessService } from '../../shared/services/admin-access.service';
 export class ProjectDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly apiService = inject(ApiService);
+  readonly adminAccess = inject(AdminAccessService);
 
   readonly project = signal<Project | null>(null);
   readonly loading = signal(true);
@@ -146,6 +147,12 @@ export class ProjectDetailComponent implements OnInit {
       this.loading.set(false);
       return;
     }
+    this.loadProjectData(id);
+  }
+
+  private loadProjectData(id: number): void {
+    this.loading.set(true);
+    this.error.set('');
     forkJoin({ project: this.apiService.getProject(id), provenance: this.apiService.getProjectProvenance(id) }).subscribe({
       next: ({ project, provenance }) => {
         this.project.set(project);
@@ -160,26 +167,31 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   onApprove(): void {
-    if (!confirm('Approve project #'' + this.project()?.id + '?')) return;
-    this.apiService.approveProject(this.project()!.id).subscribe({
+    const proj = this.project();
+    if (!proj) return;
+    if (!confirm(`Approve project #${proj.id}?`)) return;
+    this.apiService.approveProject(proj.id).subscribe({
       next: () => {
-        this.loadProjects();
+        this.loadProjectData(proj.id);
       },
       error: (err) => {
-        this.error.set(appErrorMessage(err, 'Approve failed'));
+        this.error.set(err?.message || 'Approve failed');
       },
     });
   }
 
   onReject(): void {
-    if (!confirm('Reject project #'' + this.project()?.id + '?')) return;
-    this.apiService.rejectProject(this.project()!.id).subscribe({
+    const proj = this.project();
+    if (!proj) return;
+    if (!confirm(`Reject project #${proj.id}?`)) return;
+    this.apiService.rejectProject(proj.id).subscribe({
       next: () => {
-        this.loadProjects();
+        this.loadProjectData(proj.id);
       },
       error: (err) => {
-        this.error.set(appErrorMessage(err, 'Reject failed'));
+        this.error.set(err?.message || 'Reject failed');
       },
     });
   }
 }
+

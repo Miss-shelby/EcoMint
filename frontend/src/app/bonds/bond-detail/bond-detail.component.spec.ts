@@ -7,6 +7,8 @@ import { Keypair } from '@stellar/stellar-sdk';
 import { BondDetailComponent } from './bond-detail.component';
 import { ApiService, BondDetailResponse } from '../../shared/services/api.service';
 import { WalletService } from '../../auth/wallet.service';
+import { AuthService } from '../../auth/auth.service';
+import { PendingTransactionsService } from '../../shared/services/pending-transactions.service';
 import { AdminAccessService } from '../../shared/services/admin-access.service';
 import { AdminIntentService } from '../../shared/services/admin-intent.service';
 import { Bond } from '../../shared/interfaces/bond.interface';
