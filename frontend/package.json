@@ -2,11 +2,12 @@
   "name": "ecomint-frontend",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@9.5.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "check:env": "node scripts/check-environments.mjs",
-    "prebuild": "npm run check:env",
+    "prebuild": "node scripts/check-environments.mjs",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
